@@ -1,0 +1,49 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "go",
+			"label": "go: test workspace",
+			"command": "test",
+			"args": [
+				"./..."
+			],
+			"problemMatcher": [
+				"$go"
+			],
+			"group": "test",
+			"detail": "cd /workspaces/go-api-template; go test ./..."
+		},
+		{
+			"type": "shell",
+			"label": "golangci-lint docker",
+			"command": "docker",
+			"args": [
+				"run",
+				"--rm", // Remove container after running
+				"-v", // Mount current directory to /app in container
+				"${workspaceFolder}:/app",
+				"-w", // Set working directory in container
+				"/app",
+				"golangci/golangci-lint", // Image to use
+				"golangci-lint", // Command to run
+				"run", // Additional argument for golangci-lint
+				"-v" // Additional argument for golangci-lint (might be empty)
+			],
+			"problemMatcher": [
+				"$go"
+			],
+		},
+		{
+			"type": "shell",
+			"label": "go: update packages",
+			"command": "go",
+			"args": [
+				"get",
+				"-u",
+				"./..."
+			],
+			"problemMatcher": []
+		},
+	]
+}

@@ -1,0 +1,17 @@
+@baseUrl = http://localhost:8080
+
+###
+
+# Health Check
+GET {{baseUrl}}/healthz HTTP/1.1
+
+###
+
+# Greetings
+POST {{baseUrl}}/greetings/Gandalf HTTP/1.1
+Content-Type: application/json
+X-API-Key: default-api-key
+
+{
+  "lastName": "Wizard"
+}
