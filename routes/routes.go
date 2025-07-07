@@ -2,15 +2,34 @@ package routes
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/nuric/go-api-template/utils"
+	"github.com/rs/zerolog/log"
 )
+
+var tpl *template.Template
+
+func init() {
+	tpl = template.Must(template.ParseGlob("templates/*/*.html"))
+	fmt.Println(tpl.DefinedTemplates())
+}
 
 func SetupRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /greetings/{firstName}", GreetingHandler)
+	mux.HandleFunc("GET /login", GetLoginPage)
 	return mux
+}
+
+func GetLoginPage(w http.ResponseWriter, r *http.Request) {
+	// This is a placeholder for the login page handler.
+	// You can render a login page template here.
+	if err := tpl.ExecuteTemplate(w, "login.html", nil); err != nil {
+		log.Error().Err(err).Msg("could not write template error response")
+		http.Error(w, "could not generate page", http.StatusInternalServerError)
+	}
 }
 
 /* Key things to note:

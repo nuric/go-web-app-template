@@ -51,12 +51,15 @@ func main() {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		utils.Encode(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+	// Handle static files
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	// Our API routes
 	apiHandler := routes.SetupRoutes()
 	// Protect API with key, you can customise or place extra measures like
 	// whitelisting IPs etc.
-	apiHandler = middleware.APIKey(apiHandler, cfg.APIKey)
+	// apiHandler = middleware.APIKey(apiHandler, cfg.APIKey)
 	mux.Handle("/", apiHandler)
+	// mux.Handle("/login", login.Handler)
 	// Middleware
 	var handler http.Handler = mux
 	handler = middleware.ZeroLoggerMetrics(handler)

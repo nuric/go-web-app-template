@@ -1,0 +1,15 @@
+:root {
+    /* Light Theme Variables */
+    --primary-colour: #6a5af9;
+    --secondary-colour: #d1d1f7;
+    --text-colour: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark Theme Variables */
+        --primary-colour: #7b6ef1;
+        --secondary-colour: #2a2a4a;
+        --font-colour: #f1f1f1;
+    }
+}
