@@ -1,0 +1,59 @@
+:root {
+    /* Common CSS Variables */
+    --primary-colour: #007bff;
+    --secondary-colour: #6c757d;
+    /* Light Theme Variables */
+    --background-colour: #f0f0f0;
+    --text-colour: #333;
+    --card-background: #ffffff;
+    --card-border: #ddd;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark Theme Variables */
+        --background-colour: #121212;
+        --text-colour: #e0e0e0;
+        --card-background: #1e1e1e;
+        --card-border: #333;
+    }
+}
+
+html {
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-colour);
+    color: var(--text-colour);
+    line-height: 1.4;
+}
+
+h1 {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.card {
+    background-color: var(--card-background);
+    border: 1px solid var(--card-border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 1rem auto;
+    max-width: 400px;
+}
+
+button {
+    background-color: var(--primary-colour);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    vertical-align: middle;
+}
