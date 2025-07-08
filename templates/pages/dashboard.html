@@ -1,0 +1,48 @@
+{{template "base_begin.html" .}}
+
+{{define "title"}}Dashboard{{end}}
+
+<div class="container-fluid">
+    <header>
+        <nav>
+            <ul>
+                <li><strong>Acme Corp</strong></li>
+            </ul>
+            <ul>
+                <li><a href="#" class="secondary">Services</a></li>
+                <li>
+                    <details class="dropdown">
+                        <summary>
+                            Account
+                        </summary>
+                        <ul dir="rtl">
+                            <li><a href="#">Profile</a></li>
+                            <li><a href="#">Settings</a></li>
+                            <li><a href="#">Security</a></li>
+                            <li><a href="#">Logout</a></li>
+                        </ul>
+                    </details>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <h1>Welcome to the Dashboard</h1>
+            <p>This is your dashboard where you can manage your account and view your data.</p>
+            <p>Use the navigation menu to access different sections.</p>
+            <p>For more information, visit our <a href="#">help page</a>.</p>
+            <p>Need assistance? Contact our <a href="#">support team</a>.</p>
+            <p>Check out our <a href="#">latest updates</a> and <a href="#">upcoming features</a>.</p>
+            <p>Stay tuned for more exciting features coming soon!</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Acme Corp. All rights reserved.</p>
+        <p>Follow us on <a href="#">Twitter</a> and <a href="#">Facebook</a>.</p>
+        <p>Privacy Policy | Terms of Service</p>
+    </footer>
+</div>
+
+{{template "base_end.html" .}}
