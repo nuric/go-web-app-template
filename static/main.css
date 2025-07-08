@@ -1,59 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("theme.css");
+
+:host,
 :root {
-    /* Common CSS Variables */
-    --primary-colour: #007bff;
-    --secondary-colour: #6c757d;
-    /* Light Theme Variables */
-    --background-colour: #f0f0f0;
-    --text-colour: #333;
-    --card-background: #ffffff;
-    --card-border: #ddd;
+    --pico-font-size: 90%;
+    --pico-font-family-sans-serif: "Raleway", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
+a {
+    --pico-text-decoration: none;
+}
+
+@media (min-width: 576px) {
+
+    :host,
     :root {
-        /* Dark Theme Variables */
-        --background-colour: #121212;
-        --text-colour: #e0e0e0;
-        --card-background: #1e1e1e;
-        --card-border: #333;
+        --pico-font-size: 100%;
     }
 }
 
-html {
-    box-sizing: border-box;
-    font-size: 16px;
+@media (min-width: 768px) {
+
+    :host,
+    :root {
+        --pico-font-size: 106.25%;
+    }
 }
 
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: var(--background-colour);
-    color: var(--text-colour);
-    line-height: 1.4;
+@media (min-width: 1024px) {
+
+    :host,
+    :root {
+        --pico-font-size: 112.5%;
+    }
 }
 
-h1 {
-    font-size: 1.5rem;
-    margin-top: 0;
-    margin-bottom: 1rem;
+@media (min-width: 1280px) {
+
+    :host,
+    :root {
+        --pico-font-size: 118.75%;
+    }
 }
 
-.card {
-    background-color: var(--card-background);
-    border: 1px solid var(--card-border);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    margin: 1rem auto;
-    max-width: 400px;
+@media (min-width: 1536px) {
+
+    :host,
+    :root {
+        --pico-font-size: 125%;
+    }
 }
 
-button {
-    background-color: var(--primary-colour);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    vertical-align: middle;
+/* Override 100 width for submit buttons */
+button[type=submit] {
+    width: auto;
+}
+
+.feather {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+dialog {
+    transition: display 1s allow-discrete, overlay 1s allow-discrete;
+
+    animation: close 1s forwards;
+
+    &[open] {
+        animation: open 1s forwards;
+    }
+}
+
+@keyframes open {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes close {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }

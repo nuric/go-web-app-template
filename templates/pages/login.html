@@ -2,28 +2,48 @@
 
 {{define "title"}}Login{{end}}
 
-<main class="card">
+<article>
+  <header>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+      <i data-feather="log-in" style="width: 3rem; height: 3rem;"></i>
+      <h1>Login</h1>
+    </div>
+  </header>
   <form>
-    <h1>Please sign in</h1>
-    <div>
-      <label for="floatingInput">Email address</label>
-      <input type="email" id="floatingInput" placeholder="name@example.com" />
+    <label for="email">Email address</label>
+    <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com" />
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" />
+    <div style="display: flex; justify-content: space-between;">
+      <label>
+        <input name="terms" type="checkbox" role="switch" />
+        Remember me
+      </label>
+      <a href="#" onclick="document.getElementById('forgotPassword').showModal()">Forgot password?</a>
     </div>
-    <div>
-      <label for="floatingPassword">Password</label>
-      <input type="password" id="floatingPassword" placeholder="Password" />
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button type="submit"><i data-feather="log-in"></i> Log in</button>
+      <a href="/signup">Don't have an account? Sign up</a>
     </div>
-    <div>
-      <label for="checkDefault">Remember me</label>
-      <input type="checkbox" value="remember-me" id="checkDefault" />
-    </div>
-    <input type="date" name="date" aria-label="Date">
-    <label>
-      <input name="terms" type="checkbox" role="switch" />
-      I agree to the Terms
-    </label>
-    <button type="submit">Sign in <i data-feather="log-in"></i> </button>
   </form>
-</main>
+</article>
+
+<dialog id="forgotPassword" style="max-width: 400px; width: 100%;">
+  <article>
+    <header>
+      <button aria-label="Close" rel="prev" onclick="this.closest('dialog').close()"></button>
+      <h2>Forgot Password</h2>
+    </header>
+    <p>We will send you an email with instructions to reset your password.</p>
+    <form method="dialog">
+      <label for="resetEmail">Email:</label>
+      <input type="email" id="resetEmail" name="resetEmail" required />
+      <button type="submit">Send Reset Link</button>
+    </form>
+    <footer>
+      <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
+    </footer>
+  </article>
+</dialog>
 
 {{template "centre_end.html" .}}

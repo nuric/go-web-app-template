@@ -20,6 +20,7 @@ func SetupRoutes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /greetings/{firstName}", GreetingHandler)
 	mux.HandleFunc("GET /login", GetLoginPage)
+	mux.HandleFunc("GET /signup", GetSignUpPage)
 	return mux
 }
 
@@ -27,6 +28,15 @@ func GetLoginPage(w http.ResponseWriter, r *http.Request) {
 	// This is a placeholder for the login page handler.
 	// You can render a login page template here.
 	if err := tpl.ExecuteTemplate(w, "login.html", nil); err != nil {
+		log.Error().Err(err).Msg("could not write template error response")
+		http.Error(w, "could not generate page", http.StatusInternalServerError)
+	}
+}
+
+func GetSignUpPage(w http.ResponseWriter, r *http.Request) {
+	// This is a placeholder for the signup page handler.
+	// You can render a signup page template here.
+	if err := tpl.ExecuteTemplate(w, "signup.html", nil); err != nil {
 		log.Error().Err(err).Msg("could not write template error response")
 		http.Error(w, "could not generate page", http.StatusInternalServerError)
 	}

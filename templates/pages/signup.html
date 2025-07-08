@@ -1,0 +1,28 @@
+{{template "centre_begin.html" .}}
+
+{{define "title"}}Sign up{{end}}
+
+<article>
+    <header>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+            <i data-feather="log-in" style="width: 3rem; height: 3rem;"></i>
+            <h1>Sign up</h1>
+        </div>
+    </header>
+    <p>Create a new account to get started.</p>
+    <form>
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com" />
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Password" autocomplete="new-password" />
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm Password"
+            autocomplete="new-password" />
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <button type="submit"><i data-feather="user-plus"></i> Sign up</button>
+            <a href="/login">Already have an account? Log in</a>
+        </div>
+    </form>
+</article>
+
+{{template "centre_end.html" .}}
