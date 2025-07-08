@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/glebarez/sqlite"
 	"github.com/nuric/go-api-template/middleware"
+	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/routes"
 	"github.com/nuric/go-api-template/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type Config struct {
@@ -22,6 +25,7 @@ type Config struct {
 	Debug           bool   `env:"DEBUG" envDefault:"true"`
 	Port            int    `env:"PORT" envDefault:"8080"`
 	APIKey          string `env:"API_KEY" envDefault:"default-api-key"`
+	DBUrl           string `env:"DB_URL" envDefault:"data.db"`
 }
 
 func main() {
@@ -47,6 +51,15 @@ func main() {
 	}
 	log.Debug().Msg("Debug mode enabled")
 	// ---------------------------
+	// Setup database connection
+	db, err := gorm.Open(sqlite.Open(cfg.DBUrl), &gorm.Config{})
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to connect to database")
+	}
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		log.Fatal().Err(err).Msg("Failed to auto-migrate database")
+	}
+	// ---------------------------
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		utils.Encode(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -54,7 +67,7 @@ func main() {
 	// Handle static files
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	// Our API routes
-	apiHandler := routes.SetupRoutes()
+	apiHandler := routes.SetupRoutes(db)
 	// Protect API with key, you can customise or place extra measures like
 	// whitelisting IPs etc.
 	// apiHandler = middleware.APIKey(apiHandler, cfg.APIKey)

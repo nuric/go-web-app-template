@@ -7,6 +7,7 @@ import (
 
 	"github.com/nuric/go-api-template/utils"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 var tpl *template.Template
@@ -16,8 +17,14 @@ func init() {
 	fmt.Println(tpl.DefinedTemplates())
 }
 
-func SetupRoutes() http.Handler {
+type dbRoutes struct {
+	db *gorm.DB
+}
+
+func SetupRoutes(db *gorm.DB) http.Handler {
 	mux := http.NewServeMux()
+	dbs := &dbRoutes{db: db}
+	log.Debug().Any("dbs", dbs).Msg("Setting up routes")
 	mux.HandleFunc("POST /greetings/{firstName}", GreetingHandler)
 	mux.HandleFunc("GET /login", GetLoginPage)
 	mux.HandleFunc("GET /signup", GetSignUpPage)
