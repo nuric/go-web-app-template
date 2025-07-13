@@ -8,8 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/glebarez/sqlite"
+	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/routes"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 func makeRequest(t *testing.T, method string, endpoint string, body any, resp any) int {
@@ -32,7 +35,10 @@ func makeRequest(t *testing.T, method string, endpoint string, body any, resp an
 	req.Header.Set("Content-Type", "application/json")
 	// ---------------------------
 	recorder := httptest.NewRecorder()
-	handler := routes.SetupRoutes()
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.AutoMigrate(&models.User{}))
+	handler := routes.SetupRoutes(db)
 	handler.ServeHTTP(recorder, req)
 	// ---------------------------
 	if resp != nil {

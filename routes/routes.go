@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"path/filepath"
+	"runtime"
 
 	"github.com/nuric/go-api-template/utils"
 	"github.com/rs/zerolog/log"
@@ -13,7 +15,15 @@ import (
 var tpl *template.Template
 
 func init() {
-	tpl = template.Must(template.ParseGlob("templates/*/*.html"))
+	_, sourcePath, _, ok := runtime.Caller(0)
+	if !ok {
+		log.Fatal().Msg("Could not determine source path for templates")
+	}
+	// sourcePath  is something like .../go-web-app-template/routes/routes.go
+	// We want .../go-web-app-template/templates/*/*.html
+	tplPath := filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "templates", "*", "*.html")
+	log.Debug().Str("tplPath", tplPath).Msg("Loading templates")
+	tpl = template.Must(template.ParseGlob(tplPath))
 	fmt.Println(tpl.DefinedTemplates())
 }
 
