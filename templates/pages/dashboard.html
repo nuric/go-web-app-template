@@ -19,7 +19,7 @@
                             <li><a href="#">Profile</a></li>
                             <li><a href="#">Settings</a></li>
                             <li><a href="#">Security</a></li>
-                            <li><a href="#">Logout</a></li>
+                            <li><a href="/logout">Logout</a></li>
                         </ul>
                     </details>
                 </li>
@@ -28,7 +28,7 @@
     </header>
     <main>
         <section>
-            <h1>Welcome to the Dashboard</h1>
+            <h1>Welcome to the Dashboard {{ .User.Email }}</h1>
             <p>This is your dashboard where you can manage your account and view your data.</p>
             <p>Use the navigation menu to access different sections.</p>
             <p>For more information, visit our <a href="#">help page</a>.</p>

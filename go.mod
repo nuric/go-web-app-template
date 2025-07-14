@@ -5,8 +5,13 @@ go 1.24.1
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/glebarez/sqlite v1.11.0
+	github.com/gorilla/csrf v1.7.3
+	github.com/gorilla/schema v1.4.1
+	github.com/gorilla/securecookie v1.1.2
+	github.com/gorilla/sessions v1.4.0
 	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/crypto v0.40.0
 	gorm.io/gorm v1.30.0
 )
 
@@ -22,8 +27,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rs/xid v1.6.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect

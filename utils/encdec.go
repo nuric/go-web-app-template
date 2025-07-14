@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/schema"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -38,8 +40,33 @@ func Encode[T any](w http.ResponseWriter, status int, v T) {
 	}
 }
 
+func DecodeValidForm[T Validator](r *http.Request) (T, error) {
+	var v T
+	// First, parse the form data from the request body.
+	// This populates r.PostForm.
+	if err := r.ParseForm(); err != nil {
+		return v, fmt.Errorf("failed to parse form: %w", err)
+	}
+
+	// Decode the form data from r.PostForm into the struct.
+	// We use r.PostForm to ensure we only get data from the request body,
+	// not from the URL query parameters.
+	newSchemaDecoder := schema.NewDecoder()
+	newSchemaDecoder.IgnoreUnknownKeys(true) // Ignore any unknown keys in the form data
+	if err := newSchemaDecoder.Decode(&v, r.PostForm); err != nil {
+		return v, fmt.Errorf("failed to decode form: %w", err)
+	}
+
+	// Now, validate the populated struct using its Validate method.
+	if err := v.Validate(); err != nil {
+		return v, fmt.Errorf("validation error: %w", err)
+	}
+
+	return v, nil
+}
+
 // DecodeValid decodes the request body into the object and then validates it.
-func DecodeValid[T Validator](r *http.Request) (T, error) {
+func DecodeValidJSON[T Validator](r *http.Request) (T, error) {
 	var v T
 	ctype := r.Header.Get("Content-Type")
 	switch ctype {

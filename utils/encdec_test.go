@@ -89,7 +89,7 @@ func TestDecodeValid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(tt.body))
 			r.Header.Set("Content-Type", tt.content)
-			v, err := utils.DecodeValid[testMap](r)
+			v, err := utils.DecodeValidJSON[testMap](r)
 			if tt.fail {
 				require.Error(t, err)
 				return

@@ -11,6 +11,8 @@ import (
 
 	"github.com/caarlos0/env/v11"
 	"github.com/glebarez/sqlite"
+	"github.com/gorilla/csrf"
+	"github.com/gorilla/sessions"
 	"github.com/nuric/go-api-template/middleware"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/routes"
@@ -24,8 +26,9 @@ type Config struct {
 	PrettyLogOutput bool   `env:"PRETTY_LOG_OUTPUT" envDefault:"true"`
 	Debug           bool   `env:"DEBUG" envDefault:"true"`
 	Port            int    `env:"PORT" envDefault:"8080"`
-	APIKey          string `env:"API_KEY" envDefault:"default-api-key"`
 	DBUrl           string `env:"DB_URL" envDefault:"data.db"`
+	SessionSecret   string `env:"SESSION_SECRET" envDefault:"32-character-long-secret-key-abc"`
+	CSRFSecret      string `env:"CSRF_SECRET" envDefault:"32-character-long-csrf-secret-key-xyz"`
 }
 
 func main() {
@@ -66,8 +69,9 @@ func main() {
 	})
 	// Handle static files
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	// Our API routes
-	apiHandler := routes.SetupRoutes(db)
+	// Our routes
+	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
+	apiHandler := routes.SetupRoutes(db, ss)
 	// Protect API with key, you can customise or place extra measures like
 	// whitelisting IPs etc.
 	// apiHandler = middleware.APIKey(apiHandler, cfg.APIKey)
@@ -75,6 +79,8 @@ func main() {
 	// mux.Handle("/login", login.Handler)
 	// Middleware
 	var handler http.Handler = mux
+	// https://github.com/gorilla/csrf/issues/190
+	handler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
 	handler = middleware.ZeroLoggerMetrics(handler)
 	handler = middleware.Recover(handler)
 	// ---------------------------
