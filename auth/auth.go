@@ -16,7 +16,7 @@ const sessionName = "app-session"
 const userKey contextKey = "currentUser"
 const userIDKey = "userId"
 
-func AuthenticatedOnly(next http.Handler, db *gorm.DB, store sessions.Store) http.Handler {
+func UserMiddleware(next http.Handler, db *gorm.DB, store sessions.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, err := store.Get(r, sessionName)
 		if err != nil {
@@ -28,30 +28,33 @@ func AuthenticatedOnly(next http.Handler, db *gorm.DB, store sessions.Store) htt
 		// 	log.Debug().Any("key", k).Str("kt", fmt.Sprintf("%T", k)).Interface("value", v).Str("t", fmt.Sprintf("%T", v)).Msg("Session value")
 		// }
 		// Check if user Id is set in the session
-		userId, ok := s.Values[userIDKey].(uint)
-		if !ok {
+		if userId, ok := s.Values[userIDKey].(uint); ok {
+			// Fetch user from database to ensure user exists
+			var user models.User
+			if err := db.First(&user, userId).Error; err != nil && err != gorm.ErrRecordNotFound {
+				log.Error().Err(err).Msg("Failed to fetch user from database")
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			// Store user ID in request context for further use
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, userKey, user)
+			r = r.WithContext(ctx)
+			log.Debug().Uint("userId", userId).Msg("Authenticated user")
+		}
+		// Call the next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+func AuthenticatedOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := GetCurrentUser(r)
+		if user.ID == 0 || user.Email == "" {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
-		// Fetch user from database to ensure user exists
-		var user models.User
-		if err := db.First(&user, userId).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
-				return
-			}
-			log.Error().Err(err).Msg("Failed to fetch user from database")
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-		// Store user ID in request context for further use
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, userKey, user)
-		r = r.WithContext(ctx)
-		log.Debug().Uint("userId", userId).Msg("Authenticated user")
-		// Call the next handler
 		next.ServeHTTP(w, r)
-
 	})
 }
 

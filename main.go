@@ -13,6 +13,7 @@ import (
 	"github.com/glebarez/sqlite"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
+	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/middleware"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/routes"
@@ -79,6 +80,7 @@ func main() {
 	// mux.Handle("/login", login.Handler)
 	// Middleware
 	var handler http.Handler = mux
+	handler = auth.UserMiddleware(handler, db, ss)
 	// https://github.com/gorilla/csrf/issues/190
 	handler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
 	handler = middleware.ZeroLoggerMetrics(handler)

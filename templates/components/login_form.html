@@ -1,0 +1,36 @@
+<form method="POST">
+    <input type="hidden" name="_action" value="login" />
+    <label for="email">Email address</label>
+    <input type="email" id="email" required name="email" autocomplete="email" placeholder="name@example.com"
+        value="{{ .Email }}" {{if or .Email .EmailError}}aria-invalid="{{ if .EmailError }}true{{ else }}false{{ end }}"
+        {{end}} aria-describedby="emailError" />
+    {{ if .EmailError }}
+    <small id="emailError">{{ .EmailError }}</small>
+    {{ end }}
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required name="password" placeholder="Password" autocomplete="current-password"
+        value="{{ .Password }}" {{if or .Password .PasswordError}}
+        aria-invalid="{{ if .PasswordError }}true{{ else }}false{{ end }}" {{end}} aria-describedby="passwordError" />
+    {{ if .PasswordError }}
+    <small id="passwordError">{{ .PasswordError }}</small>
+    {{ end }}
+
+    {{ .CSRF }}
+    {{ if .GeneralError }}
+    <p class="error">{{ .GeneralError }}</p>
+    {{ end }}
+    <div style="display: flex; justify-content: space-between;">
+        <label>
+            <input name="terms" type="checkbox" role="switch" />
+            Remember me
+        </label>
+        <a href="#" onclick="document.getElementById('forgotPassword').showModal()">Forgot password?</a>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <button type="submit"><i data-feather="log-in"></i> Log in</button>
+        <a href="/signup">Don't have an account? Sign up</a>
+    </div>
+</form>
+
+{{ template "forgot_password.html" .ForgotPassword }}

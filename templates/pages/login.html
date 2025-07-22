@@ -9,45 +9,7 @@
       <h1>Login</h1>
     </div>
   </header>
-  <form method="POST">
-    <label for="email">Email address</label>
-    <input type="email" id="email" name="email" autocomplete="email" placeholder="name@example.com" />
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" />
-    {{ .csrfField }}
-    {{ if .error }}
-    <p class="error">{{ .error }}</p>
-    {{ end }}
-    <div style="display: flex; justify-content: space-between;">
-      <label>
-        <input name="terms" type="checkbox" role="switch" />
-        Remember me
-      </label>
-      <a href="#" onclick="document.getElementById('forgotPassword').showModal()">Forgot password?</a>
-    </div>
-    <div style="display: flex; flex-direction: column; align-items: center;">
-      <button type="submit"><i data-feather="log-in"></i> Log in</button>
-      <a href="/signup">Don't have an account? Sign up</a>
-    </div>
-  </form>
+  {{ template "login_form.html" .LoginForm }}
 </article>
-
-<dialog id="forgotPassword" style="max-width: 400px; width: 100%;">
-  <article>
-    <header>
-      <button aria-label="Close" rel="prev" onclick="this.closest('dialog').close()"></button>
-      <h2>Forgot Password</h2>
-    </header>
-    <p>We will send you an email with instructions to reset your password.</p>
-    <form method="dialog">
-      <label for="resetEmail">Email:</label>
-      <input type="email" id="resetEmail" name="resetEmail" required />
-      <button type="submit">Send Reset Link</button>
-    </form>
-    <footer>
-      <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
-    </footer>
-  </article>
-</dialog>
 
 {{template "centre_end.html" .}}
