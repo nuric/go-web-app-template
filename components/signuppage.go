@@ -55,10 +55,6 @@ func (p *SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		render(w, "signup.html", p)
 		return
 	}
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	r.ParseForm()
 	if r.PostFormValue("_action") != "signup" {
 		// Not our action, ignore
