@@ -50,6 +50,12 @@ func (p *SignUpPage) Validate() (ok bool) {
 }
 
 func (p *SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetCurrentUser(r)
+	if user.ID != 0 {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		return
+	}
+	// ---------------------------
 	p.CSRF = csrf.TemplateField(r)
 	if r.Method == http.MethodGet {
 		render(w, "signup.html", p)
