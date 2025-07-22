@@ -2,5 +2,13 @@
     "editor.formatOnSave": true,
     "[html]": {
         "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "gopls": {
+        "ui.semanticTokens": true,
+        "build.templateExtensions": [
+            "html",
+            "tmpl",
+            "gohtml"
+        ]
     }
 }
