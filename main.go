@@ -72,17 +72,14 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	// Our routes
 	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
-	apiHandler := routes.SetupRoutes(db, ss)
-	// Protect API with key, you can customise or place extra measures like
-	// whitelisting IPs etc.
-	// apiHandler = middleware.APIKey(apiHandler, cfg.APIKey)
-	mux.Handle("/", apiHandler)
+	appHandler := routes.SetupRoutes(db, ss)
+	appHandler = auth.UserMiddleware(appHandler, db, ss)
+	// https://github.com/gorilla/csrf/issues/190
+	appHandler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(appHandler)
+	mux.Handle("/", appHandler)
 	// mux.Handle("/login", login.Handler)
 	// Middleware
 	var handler http.Handler = mux
-	handler = auth.UserMiddleware(handler, db, ss)
-	// https://github.com/gorilla/csrf/issues/190
-	handler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
 	handler = middleware.ZeroLoggerMetrics(handler)
 	handler = middleware.Recover(handler)
 	// ---------------------------
