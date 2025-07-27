@@ -90,3 +90,13 @@ dialog {
         opacity: 0;
     }
 }
+
+p.success {
+    color: green;
+    text-align: center;
+}
+
+p.error {
+    color: indianred;
+    text-align: center;
+}
