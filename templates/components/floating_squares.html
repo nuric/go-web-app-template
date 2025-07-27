@@ -17,7 +17,7 @@
         border-radius: 20px;
         background: rgba(100, 200, 255, 0.15);
         box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
-        animation: floatSquare 12s linear infinite;
+        animation: floatSquare 24s linear infinite;
     }
 
     @keyframes floatSquare {
@@ -46,7 +46,7 @@
         sq.style.width = sq.style.height = size + 'px';
         sq.style.left = (Math.random() * 90) + '%';
         sq.style.top = (Math.random() * 80) + '%';
-        sq.style.animationDuration = (8 + Math.random() * 8) + 's';
+        sq.style.animationDuration = (16 + Math.random() * 16) + 's';
         sq.style.background = `rgba(${100 + Math.random() * 100},${180 + Math.random() * 60},255,0.13)`;
         bg.appendChild(sq);
     }
