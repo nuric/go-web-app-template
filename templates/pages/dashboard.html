@@ -145,6 +145,9 @@
 
 <!-- Sidebar HTML -->
 <aside class="sidebar">
+    <!-- Close button at top right -->
+    <i id="sidebar-close-icon" style="position:absolute;top:1rem;right:1rem;cursor:pointer;color: var(--pico-primary);"
+        data-feather="x-square"></i>
     <div class="sidebar-header">
         <div class="avatar" title="{{ .User.Email }}">
             K
@@ -227,6 +230,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarClose = document.getElementById('sidebar-close-icon');
         const contentOverlay = document.querySelector('.content-overlay');
 
         // Function to toggle the sidebar
@@ -237,6 +241,11 @@
         // Event listener for the menu button
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', toggleSidebar);
+        }
+
+        // Event listener for the close button in the sidebar
+        if (sidebarClose) {
+            sidebarClose.addEventListener('click', toggleSidebar);
         }
 
         // Event listener for the content overlay (to close sidebar on mobile)
