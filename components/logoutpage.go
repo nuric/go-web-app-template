@@ -10,7 +10,7 @@ import (
 type LogoutPage struct {
 }
 
-func (p *LogoutPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p LogoutPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := auth.LogUserOut(w, r, ss); err != nil {
 		log.Error().Err(err).Msg("could not log user out")
 		http.Error(w, "could not log user out, please try again", http.StatusInternalServerError)

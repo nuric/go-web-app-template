@@ -49,7 +49,7 @@ func (p *SignUpPage) Validate() (ok bool) {
 	return
 }
 
-func (p *SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
 	if user.ID != 0 {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
@@ -67,7 +67,7 @@ func (p *SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	if err := DecodeValidForm(p, r); err != nil {
+	if err := DecodeValidForm(&p, r); err != nil {
 		p.Error = err
 		render(w, "signup.html", p)
 		return

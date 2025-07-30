@@ -10,7 +10,7 @@ type LoginPage struct {
 	LoginForm *LoginForm
 }
 
-func (p *LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
 	if user.ID != 0 {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
