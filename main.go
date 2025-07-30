@@ -70,6 +70,9 @@ func main() {
 	})
 	// Handle static files
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/favicon.ico")
+	})
 	// Our routes
 	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
 	appHandler := routes.SetupRoutes(db, ss)
