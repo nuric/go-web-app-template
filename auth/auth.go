@@ -58,6 +58,17 @@ func AuthenticatedOnly(next http.Handler) http.Handler {
 	})
 }
 
+func VerifiedOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := GetCurrentUser(r)
+		if user.ID == 0 || user.Email == "" || !user.EmailVerified {
+			http.Redirect(w, r, "/verify-email", http.StatusSeeOther)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func GetCurrentUser(r *http.Request) models.User {
 	user, ok := r.Context().Value(userKey).(models.User)
 	if !ok {

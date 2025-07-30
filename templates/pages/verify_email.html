@@ -1,0 +1,48 @@
+{{template "centre_begin.html" .}}
+
+{{define "title"}}Verify Email{{end}}
+
+<article>
+    <header>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+            <i data-feather="mail" style="width: 3rem; height: 3rem;"></i>
+            <h1>Verify Email</h1>
+        </div>
+    </header>
+    <p>Enter the verification token sent to your email address.</p>
+    <form method="POST">
+        <input type="hidden" name="_action" value="verify_email" />
+        <label for="token">Verification Token</label>
+        <input type="text" id="token" required name="token" placeholder="Enter your token" value="{{ .Token }}" {{if or
+            .Token .TokenError}} aria-invalid="{{ if .TokenError }}true{{ else }}false{{ end }}" {{end}}
+            aria-describedby="tokenError" />
+        {{ if .TokenError }}
+        <small id="tokenError">{{ .TokenError }}</small>
+        {{ end }}
+
+        {{ .CSRF }}
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <button type="submit"><i data-feather="check"></i> Verify Email</button>
+        </div>
+    </form>
+
+    <form method="POST" id="resendForm" style="margin-top: 2rem;">
+        <input type="hidden" name="_action" value="resend_verification" />
+        {{ .CSRF }}
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <button type="submit" id="resendBtn"><i data-feather="refresh-cw"></i> Resend Verification Token</button>
+            <small id="resendInfo" style="margin-top: 8px;"></small>
+        </div>
+    </form>
+
+    {{ if .Message }}
+    <div style="margin-top: 1rem; text-align: center;">
+        <p>{{ .Message }}</p>
+    </div>
+    {{ end }}
+</article>
+
+{{template "centre_end.html" .}}
