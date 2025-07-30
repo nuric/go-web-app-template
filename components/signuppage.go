@@ -21,7 +21,7 @@ type SignUpPage struct {
 	ConfirmPassword      string `schema:"confirmPassword"`
 	ConfirmPasswordError error
 	CSRF                 template.HTML
-	GeneralError         error
+	Error                error
 }
 
 func (p *SignUpPage) Validate() (ok bool) {
@@ -68,7 +68,7 @@ func (p *SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	// ---------------------------
 	if err := DecodeValidForm(p, r); err != nil {
-		p.GeneralError = err
+		p.Error = err
 		render(w, "signup.html", p)
 		return
 	}
@@ -80,7 +80,7 @@ func (p *SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := db.Create(&newUser).Error; err != nil {
 		log.Error().Err(err).Msg("could not create user")
-		p.GeneralError = fmt.Errorf("could not create user")
+		p.Error = fmt.Errorf("could not create user")
 		render(w, "signup.html", p)
 		return
 	}

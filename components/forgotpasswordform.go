@@ -12,7 +12,7 @@ import (
 type ForgotPasswordForm struct {
 	Email          string `schema:"resetEmail"`
 	EmailError     error
-	GeneralError   error
+	Error          error
 	SuccessMessage string
 	DialogOpen     bool
 	CSRF           template.HTML
@@ -41,7 +41,7 @@ func (f *ForgotPasswordForm) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// ---------------------------
 	f.DialogOpen = true
 	if err := DecodeValidForm(f, r); err != nil {
-		f.GeneralError = err
+		f.Error = err
 		return
 	}
 	log.Debug().Str("email", f.Email).Msg("Forgot password request")

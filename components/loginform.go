@@ -17,7 +17,7 @@ type LoginForm struct {
 	EmailError     error
 	Password       string `schema:"password"`
 	PasswordError  error
-	GeneralError   error
+	Error          error
 	CSRF           template.HTML
 	ForgotPassword *ForgotPasswordForm
 }
@@ -50,23 +50,23 @@ func (f *LoginForm) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	// ---------------------------
 	if err := DecodeValidForm(f, r); err != nil {
-		f.GeneralError = err
+		f.Error = err
 		return
 	}
 	var user models.User
 	if err := db.Where("email = ?", f.Email).First(&user).Error; err != nil {
 		log.Debug().Err(err).Uint("userId", user.ID).Msg("could not find user")
-		f.GeneralError = fmt.Errorf("invalid email or password")
+		f.Error = fmt.Errorf("invalid email or password")
 		return
 	}
 	if !utils.VerifyPassword(user.Password, f.Password) {
 		log.Debug().Uint("userId", user.ID).Msg("password verification failed")
-		f.GeneralError = fmt.Errorf("invalid email or password")
+		f.Error = fmt.Errorf("invalid email or password")
 		return
 	}
 	if err := auth.LogUserIn(w, r, user.ID, ss); err != nil {
 		log.Error().Err(err).Uint("userId", user.ID).Msg("could not log user in")
-		f.GeneralError = fmt.Errorf("could not log user in")
+		f.Error = fmt.Errorf("could not log user in")
 		return
 	}
 	log.Debug().Uint("userId", user.ID).Str("email", f.Email).Msg("User logged in successfully")

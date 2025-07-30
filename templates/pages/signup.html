@@ -40,8 +40,8 @@
         {{ end }}
 
         {{ .CSRF }}
-        {{ if .GeneralError }}
-        <p class="error">{{ .GeneralError }}</p>
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
         {{ end }}
         <div style="display: flex; flex-direction: column; align-items: center;">
             <button type="submit"><i data-feather="user-plus"></i> Sign up</button>
