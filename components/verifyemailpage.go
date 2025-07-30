@@ -100,7 +100,7 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Order("created_at DESC").
 			First(&token).Error; err != nil {
 			log.Error().Err(err).Msg("could not find valid token")
-			p.Error = fmt.Errorf("invalid or expired token")
+			p.Error = fmt.Errorf("invalid token")
 			render(w, "verify_email.html", p)
 			return
 		}
