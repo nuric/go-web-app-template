@@ -10,6 +10,15 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+// https://thecopenhagenbook.com/random-values
+var humanFriendlyEncoding = base32.NewEncoding("0123456789ABCDEFGHJKMNPQRSTVWXYZ").WithPadding(base32.NoPadding)
+
+func HumanFriendlyToken() string {
+	bytes := make([]byte, 12)
+	rand.Read(bytes)
+	return humanFriendlyEncoding.EncodeToString(bytes)
+}
+
 // https://thecopenhagenbook.com/password-authentication
 
 func GenerateRandomString() string {

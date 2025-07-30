@@ -29,6 +29,7 @@
         </div>
     </form>
 
+    {{ if not .Message }}
     <form method="POST" id="resendForm" style="margin-top: 2rem;">
         <input type="hidden" name="_action" value="resend_verification" />
         {{ .CSRF }}
@@ -37,12 +38,10 @@
             <small id="resendInfo" style="margin-top: 8px;"></small>
         </div>
     </form>
-
-    {{ if .Message }}
-    <div style="margin-top: 1rem; text-align: center;">
-        <p>{{ .Message }}</p>
-    </div>
+    {{ else}}
+    <p>{{ .Message }}</p>
     {{ end }}
+
 </article>
 
 {{template "centre_end.html" .}}

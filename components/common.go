@@ -1,14 +1,17 @@
 package components
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
+	"github.com/nuric/go-api-template/email"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
@@ -20,11 +23,14 @@ func init() {
 	if !ok {
 		log.Fatal().Msg("Could not determine source path for templates")
 	}
+	tpl = template.New("base")
 	// sourcePath  is something like .../go-web-app-template/routes/routes.go
 	// We want .../go-web-app-template/templates/*/*.html
 	tplPath := filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "templates", "*", "*.html")
 	log.Debug().Str("tplPath", tplPath).Msg("Loading templates")
-	tpl = template.Must(template.ParseGlob(tplPath))
+	tpl.ParseGlob(tplPath)
+	tplPath = filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "templates", "*", "*.txt")
+	tpl.ParseGlob(tplPath)
 	fmt.Println(tpl.DefinedTemplates())
 }
 
@@ -37,6 +43,21 @@ func render(w http.ResponseWriter, name string, data any) {
 	}
 }
 
+func sendTemplateEmail(to, subject, templateName string, data any) error {
+	// Render the template to a string
+	var body strings.Builder
+	if err := tpl.ExecuteTemplate(&body, templateName, data); err != nil {
+		log.Error().Err(err).Msg("could not render email template")
+		return errors.New("could not render email template")
+	}
+	// Send the email using the emailer
+	if err := em.SendEmail(to, subject, body.String()); err != nil {
+		log.Error().Err(err).Msg("could not send email")
+		return errors.New("could not send email")
+	}
+	return nil
+}
+
 // This is the global database connection exposed to the components. It should
 // be thought of as a dependency of the components. Because the nested structure
 // can be complex, we are using a global variable. During unit testing it may be
@@ -45,12 +66,14 @@ func render(w http.ResponseWriter, name string, data any) {
 // connection to every component.
 var db *gorm.DB
 var ss sessions.Store
+var em email.Emailer
 
 // SetDB sets the global database connection
-func Set(database *gorm.DB, store sessions.Store) {
+func Set(database *gorm.DB, store sessions.Store, emailer email.Emailer) {
 	db = database
 	ss = store
-	log.Debug().Str("database", db.Name()).Str("store", fmt.Sprintf("%T", store)).Msg("Database and session store set")
+	em = emailer
+	log.Debug().Str("database", db.Name()).Type("store", store).Type("emailer", emailer).Msg("Database and session store set")
 }
 
 type Validator interface {
