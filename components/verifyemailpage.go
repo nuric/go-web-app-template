@@ -40,7 +40,6 @@ func (p *VerifyEmailPage) Validate() (ok bool) {
 
 func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
-	fmt.Println("HERE", p.Message)
 	p.CSRF = csrf.TemplateField(r)
 	if r.Method == http.MethodGet {
 		switch {
