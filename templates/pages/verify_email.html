@@ -13,9 +13,8 @@
     <form method="POST">
         <input type="hidden" name="_action" value="verify_email" />
         <label for="token">Verification Token</label>
-        <input type="text" id="token" required name="token" placeholder="Enter your token" value="{{ .Token }}" {{if or
-            .Token .TokenError}} aria-invalid="{{ if .TokenError }}true{{ else }}false{{ end }}" {{end}}
-            aria-describedby="tokenError" />
+        <input type="text" id="token" required name="token" placeholder="Enter your token" value="{{ .Token }}" {{if
+            .TokenError}} aria-invalid="true" {{end}} aria-describedby="tokenError" />
         {{ if .TokenError }}
         <small id="tokenError">{{ .TokenError }}</small>
         {{ end }}
@@ -41,6 +40,15 @@
     {{ else}}
     <p>{{ .Message }}</p>
     {{ end }}
+
+    <footer>
+        <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+            <a href="/logout">
+                <i data-feather="log-out"></i> Logout
+            </a>
+        </div>
+    </footer>
+
 
 </article>
 
