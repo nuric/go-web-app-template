@@ -3,55 +3,30 @@ package components
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
-	"path/filepath"
-	"runtime"
-	"strings"
 
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
 	"github.com/nuric/go-api-template/email"
+	"github.com/nuric/go-api-template/templates"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
-var tpl *template.Template
-
-func init() {
-	_, sourcePath, _, ok := runtime.Caller(0)
-	if !ok {
-		log.Fatal().Msg("Could not determine source path for templates")
-	}
-	tpl = template.New("base")
-	// sourcePath  is something like .../go-web-app-template/routes/routes.go
-	// We want .../go-web-app-template/templates/*/*.html
-	tplPath := filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "templates", "*", "*.html")
-	log.Debug().Str("tplPath", tplPath).Msg("Loading templates")
-	tpl.ParseGlob(tplPath)
-	tplPath = filepath.Join(filepath.Dir(filepath.Dir(sourcePath)), "templates", "*", "*.txt")
-	tpl.ParseGlob(tplPath)
-	fmt.Println(tpl.DefinedTemplates())
-}
-
+// helper to reduce boilerplate in components
 func render(w http.ResponseWriter, name string, data any) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// Render the template
-	if err := tpl.ExecuteTemplate(w, name, data); err != nil {
-		log.Error().Err(err).Msg("could not write template error response")
-		http.Error(w, "could not generate page", http.StatusInternalServerError)
-	}
+	templates.RenderHTML(w, name, data)
 }
 
 func sendTemplateEmail(to, subject, templateName string, data any) error {
 	// Render the template to a string
-	var body strings.Builder
-	if err := tpl.ExecuteTemplate(&body, templateName, data); err != nil {
+	body, err := templates.RenderEmail(templateName, data)
+	if err != nil {
 		log.Error().Err(err).Msg("could not render email template")
 		return errors.New("could not render email template")
 	}
 	// Send the email using the emailer
-	if err := em.SendEmail(to, subject, body.String()); err != nil {
+	if err := em.SendEmail(to, subject, body); err != nil {
 		log.Error().Err(err).Msg("could not send email")
 		return errors.New("could not send email")
 	}

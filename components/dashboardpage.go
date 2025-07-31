@@ -11,7 +11,7 @@ type DashboardPage struct {
 	User models.User
 }
 
-func (p *DashboardPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p DashboardPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.User = auth.GetCurrentUser(r)
 	render(w, "dashboard.html", p)
 }

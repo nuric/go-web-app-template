@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,9 +15,10 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
 	"github.com/nuric/go-api-template/auth"
+	"github.com/nuric/go-api-template/components"
+	"github.com/nuric/go-api-template/email"
 	"github.com/nuric/go-api-template/middleware"
 	"github.com/nuric/go-api-template/models"
-	"github.com/nuric/go-api-template/routes"
 	"github.com/nuric/go-api-template/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -31,6 +33,9 @@ type Config struct {
 	SessionSecret   string `env:"SESSION_SECRET" envDefault:"32-character-long-secret-key-abc"`
 	CSRFSecret      string `env:"CSRF_SECRET" envDefault:"32-character-long-csrf-secret-key-xyz"`
 }
+
+//go:embed static
+var staticFS embed.FS
 
 func main() {
 	// ---------------------------
@@ -69,20 +74,25 @@ func main() {
 		utils.Encode(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 	// Handle static files
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.Handle("GET /static/", http.FileServerFS(staticFS))
 	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/favicon.ico")
 	})
 	// Our routes
 	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
-	appHandler := routes.SetupRoutes(db, ss)
-	appHandler = auth.UserMiddleware(appHandler, db, ss)
-	// https://github.com/gorilla/csrf/issues/190
-	appHandler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(appHandler)
-	mux.Handle("/", appHandler)
-	// mux.Handle("/login", login.Handler)
+	components.Set(db, ss, email.LogEmailer{})
+	mux.Handle("/login", components.LoginPage{})
+	mux.Handle("GET /logout", components.LogoutPage{})
+	mux.Handle("/signup", components.SignUpPage{})
+	mux.Handle("/verify-email", components.VerifyEmailPage{})
+	mux.Handle("GET /dashboard", auth.VerifiedOnly(components.DashboardPage{}))
+	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux
+	// https://github.com/gorilla/csrf/issues/190
+	handler = auth.UserMiddleware(handler, db, ss)
+	handler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
+	handler = middleware.NotFoundRenderer(handler)
 	handler = middleware.ZeroLoggerMetrics(handler)
 	handler = middleware.Recover(handler)
 	// ---------------------------

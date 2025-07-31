@@ -123,8 +123,7 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		// Redirect to dashboard after successful verification
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	default:
+		w.WriteHeader(http.StatusNotFound)
 	}
-	// ---------------------------
-	// It's not our action, ignore
-	// ---------------------------
 }
