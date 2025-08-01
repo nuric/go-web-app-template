@@ -29,16 +29,11 @@ docker run -p 8080:8080 go-api-template
 
 Then use the [samples.http](samples.http) file to test the API which works with [Rest Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension. You can of course use any other HTTP client like Postman or curl.
 
-## Structure
+## TODO
 
-There is no right or wrong here and the best structure depends on your needs. My advice is always adapt to what works best for you. At the moment I grouped the code into logical structure:
-
-- You have the [main.go](main.go) file which is the entry point of the application. It sets up the server and routes. Nothing fancy here.
-- The [routes](routes) folder contains the routes and handlers. I've used routes to avoid confusing with `net/http` package handler types and naming.
-- The [middleware](middleware) folder contains the middleware handlers. They take a handler and return a new handler.
-- The [utils](utils) contains some encoding and decoding helpers for now.
-
-You can restructure internall and adjust as you see fit but I find that is a good starting point.
+- Add password reset functionality
+- Implement user profile management
+- Rate limit
 
 ## Built with
 

@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
 	"github.com/nuric/go-api-template/auth"
-	"github.com/nuric/go-api-template/components"
+	"github.com/nuric/go-api-template/controllers"
 	"github.com/nuric/go-api-template/email"
 	"github.com/nuric/go-api-template/middleware"
 	"github.com/nuric/go-api-template/models"
@@ -80,12 +80,12 @@ func main() {
 	})
 	// Our routes
 	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
-	components.Set(db, ss, email.LogEmailer{})
-	mux.Handle("/login", components.LoginPage{})
-	mux.Handle("GET /logout", components.LogoutPage{})
-	mux.Handle("/signup", components.SignUpPage{})
-	mux.Handle("/verify-email", components.VerifyEmailPage{})
-	mux.Handle("GET /dashboard", auth.VerifiedOnly(components.DashboardPage{}))
+	controllers.Set(db, ss, email.LogEmailer{})
+	mux.Handle("/login", controllers.LoginPage{})
+	mux.Handle("GET /logout", controllers.LogoutPage{})
+	mux.Handle("/signup", controllers.SignUpPage{})
+	mux.Handle("/verify-email", controllers.VerifyEmailPage{})
+	mux.Handle("GET /dashboard", auth.VerifiedOnly(controllers.DashboardPage{}))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux

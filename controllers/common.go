@@ -1,4 +1,4 @@
-package components
+package controllers
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// helper to reduce boilerplate in components
+// helper to reduce boilerplate in controllers
 func render(w http.ResponseWriter, name string, data any) {
 	templates.RenderHTML(w, name, data)
 }
@@ -33,8 +33,8 @@ func sendTemplateEmail(to, subject, templateName string, data any) error {
 	return nil
 }
 
-// This is the global database connection exposed to the components. It should
-// be thought of as a dependency of the components. Because the nested structure
+// This is the global database connection exposed to the controllers. It should
+// be thought of as a dependency of the controllers. Because the nested structure
 // can be complex, we are using a global variable. During unit testing it may be
 // difficult to inject these dependencies to run tests in parallel, but the
 // quality of life improvements are worth it i.e. no need to pass the database
