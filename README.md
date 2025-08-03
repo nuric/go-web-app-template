@@ -34,6 +34,7 @@ Then use the [samples.http](samples.http) file to test the API which works with 
 - Add password reset functionality
 - Implement user profile management
 - Rate limit
+- Refactor common validators
 
 ## Built with
 

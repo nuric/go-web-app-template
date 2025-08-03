@@ -9,7 +9,75 @@
       <h1>Login</h1>
     </div>
   </header>
-  {{ template "login_form.html" .LoginForm }}
+
+  {{ with .LoginForm }}
+  <form method="POST">
+    <input type="hidden" name="_action" value="login" />
+    <label for="email">Email address</label>
+    <input type="email" id="email" required name="email" autocomplete="email" placeholder="name@example.com"
+      value="{{ .Email }}" {{if .EmailError}}aria-invalid="true" {{end}} aria-describedby="emailError" />
+    {{ if .EmailError }}
+    <small id="emailError">{{ .EmailError }}</small>
+    {{ end }}
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required name="password" placeholder="Password" autocomplete="current-password"
+      value="{{ .Password }}" {{if .PasswordError}}aria-invalid="true" {{end}} aria-describedby="passwordError" />
+    {{ if .PasswordError }}
+    <small id="passwordError">{{ .PasswordError }}</small>
+    {{ end }}
+
+    {{ .CSRF }}
+    {{ if .Error }}
+    <p class="error">{{ .Error }}</p>
+    {{ end }}
+    <div style="display: flex; justify-content: space-between;">
+      <label>
+        <input name="terms" type="checkbox" role="switch" />
+        Remember me
+      </label>
+      <a href="#" onclick="document.getElementById('forgotPassword').showModal()">Forgot password?</a>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button type="submit"><i data-feather="log-in"></i> Log in</button>
+      <a href="/signup">Don't have an account? Sign up</a>
+    </div>
+  </form>
+  {{ end }}
+
+  {{ with .ForgotPasswordForm }}
+  <dialog id="forgotPassword" style="max-width: 400px; width: 100%;" {{if .DialogOpen}}open{{end}}>
+    <article>
+      <header>
+        <button aria-label="Close" rel="prev" onclick="this.closest('dialog').close()"></button>
+        <h2>Forgot Password</h2>
+      </header>
+      <p>We will send you an email with instructions to reset your password.</p>
+      <form method="POST">
+        <input type="hidden" name="_action" value="forgot_password" />
+        <label for="email">Email address</label>
+        <input type="email" id="resetEmail" required name="resetEmail" autocomplete="email"
+          placeholder="name@example.com" value="{{ .Email }}" {{if .EmailError}}aria-invalid="true" {{end}}
+          aria-describedby="emailError" />
+        {{ if .EmailError }}
+        <small id="emailError">{{ .EmailError }}</small>
+        {{ end }}
+
+        {{ .CSRF }}
+
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
+
+        <button type="submit">Send Reset Link</button>
+      </form>
+      <footer>
+        <button type="button" onclick="this.closest('dialog').close()">Cancel</button>
+      </footer>
+    </article>
+  </dialog>
+  {{ end }}
+
 </article>
 
 {{template "centre_end.html" .}}
