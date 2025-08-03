@@ -42,23 +42,27 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.LoginForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			break
+			render(w, "login.html", p)
+			return
 		}
 		var user models.User
 		if err := db.Where("email = ?", f.Email).First(&user).Error; err != nil {
 			log.Debug().Err(err).Uint("userId", user.ID).Msg("could not find user")
 			f.Error = errors.New("invalid email or password")
-			break
+			render(w, "login.html", p)
+			return
 		}
 		if !utils.VerifyPassword(user.Password, f.Password) {
 			log.Debug().Uint("userId", user.ID).Msg("password verification failed")
 			f.Error = errors.New("invalid email or password")
-			break
+			render(w, "login.html", p)
+			return
 		}
 		if err := auth.LogUserIn(w, r, user.ID, ss); err != nil {
 			log.Error().Err(err).Uint("userId", user.ID).Msg("could not log user in")
 			f.Error = errors.New("could not log user in")
-			break
+			render(w, "login.html", p)
+			return
 		}
 		log.Debug().Uint("userId", user.ID).Str("email", f.Email).Msg("User logged in successfully")
 		// Redirect to dashboard
@@ -68,7 +72,8 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.DialogOpen = true
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			break
+			render(w, "login.html", p)
+			return
 		}
 		log.Debug().Str("email", f.Email).Msg("Forgot password request")
 		redirect := fmt.Sprintf("/reset-password?email=%s", f.Email)
@@ -76,7 +81,6 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.NotFound(w, r)
 	}
-	render(w, "login.html", p)
 }
 
 type LoginForm struct {
