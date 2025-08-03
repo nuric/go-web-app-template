@@ -16,7 +16,8 @@ type User struct {
 
 type Token struct {
 	gorm.Model
-	UserID    uint      `gorm:"not null"`
+	UserID    uint      // For tokens that are user-specific
+	Email     string    // Optional, for tokens that are not user-specific
 	Token     string    `gorm:"uniqueIndex;not null"`
 	Purpose   string    `gorm:"not null"` // e.g., "password_reset", "email_verification"
 	ExpiresAt time.Time `gorm:"not null"`

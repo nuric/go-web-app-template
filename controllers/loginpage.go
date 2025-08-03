@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
@@ -71,6 +72,27 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.ForgotPasswordForm
 		f.DialogOpen = true
 		if err := DecodeValidForm(f, r); err != nil {
+			f.Error = err
+			render(w, "login.html", p)
+			return
+		}
+		resetToken := models.Token{
+			Email:     f.Email,
+			Token:     utils.HumanFriendlyToken(),
+			Purpose:   "reset_password",
+			ExpiresAt: time.Now().Add(1 * time.Hour),
+		}
+		if err := db.Create(&resetToken).Error; err != nil {
+			log.Error().Err(err).Msg("could not create password reset token")
+			f.Error = errors.New("could not send password reset email")
+			render(w, "login.html", p)
+			return
+		}
+		emailData := map[string]any{
+			"Token": resetToken.Token,
+		}
+		if err := sendTemplateEmail(f.Email, "Password Reset", "reset_password.txt", emailData); err != nil {
+			log.Error().Err(err).Msg("could not send password reset email")
 			f.Error = err
 			render(w, "login.html", p)
 			return
