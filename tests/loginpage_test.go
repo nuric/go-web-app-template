@@ -8,7 +8,8 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/glebarez/sqlite"
 	"github.com/gorilla/sessions"
-	"github.com/nuric/go-api-template/routes"
+	"github.com/nuric/go-api-template/controllers"
+	"github.com/nuric/go-api-template/email"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
@@ -16,9 +17,15 @@ import (
 func TestLoginPage(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err)
-	ss := sessions.NewCookieStore([]byte("32-character-long-secret-key-abc"))
-	routes := routes.SetupRoutes(db, ss)
-	ts := httptest.NewServer(routes)
+	config := controllers.Config{
+		Database:   db,
+		Store:      sessions.NewCookieStore([]byte("32-character-long-secret-key-abc")),
+		Emailer:    email.LogEmailer{},
+		CSRFSecret: "32-character-long-csrf-secret-key-xyz",
+		Debug:      true,
+	}
+	handler := controllers.Setup(config)
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(t.Logf))

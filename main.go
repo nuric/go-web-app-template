@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,9 +11,7 @@ import (
 
 	"github.com/caarlos0/env/v11"
 	"github.com/glebarez/sqlite"
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/sessions"
-	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/controllers"
 	"github.com/nuric/go-api-template/email"
 	"github.com/nuric/go-api-template/middleware"
@@ -33,9 +30,6 @@ type Config struct {
 	SessionSecret   string `env:"SESSION_SECRET" envDefault:"32-character-long-secret-key-abc"`
 	CSRFSecret      string `env:"CSRF_SECRET" envDefault:"32-character-long-csrf-secret-key-xyz"`
 }
-
-//go:embed static
-var staticFS embed.FS
 
 func main() {
 	// ---------------------------
@@ -69,31 +63,22 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to auto-migrate database")
 	}
 	// ---------------------------
+	// Our routes
+	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		utils.Encode(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
-	// Handle static files
-	mux.Handle("GET /static/", http.FileServerFS(staticFS))
-	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "static/favicon.ico")
-	})
-	// Our routes
-	ss := sessions.NewCookieStore([]byte(cfg.SessionSecret))
-	controllers.Set(db, ss, email.LogEmailer{})
-	mux.Handle("/login", controllers.LoginPage{})
-	mux.Handle("GET /logout", controllers.LogoutPage{})
-	mux.Handle("/signup", controllers.SignUpPage{})
-	mux.Handle("/verify-email", controllers.VerifyEmailPage{})
-	mux.Handle("/reset-password", controllers.ResetPasswordPage{})
-	mux.Handle("GET /dashboard", auth.VerifiedOnly(controllers.DashboardPage{}))
-	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
+	config := controllers.Config{
+		Mux:        mux,
+		Database:   db,
+		Store:      ss,
+		Emailer:    email.LogEmailer{},
+		CSRFSecret: cfg.CSRFSecret,
+		Debug:      cfg.Debug,
+	}
+	handler := controllers.Setup(config)
 	// Middleware
-	var handler http.Handler = mux
-	// https://github.com/gorilla/csrf/issues/190
-	handler = auth.UserMiddleware(handler, db, ss)
-	handler = csrf.Protect([]byte(cfg.CSRFSecret), csrf.Secure(!cfg.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
-	handler = middleware.NotFoundRenderer(handler)
 	handler = middleware.ZeroLoggerMetrics(handler)
 	handler = middleware.Recover(handler)
 	// ---------------------------

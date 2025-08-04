@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
+	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/email"
+	"github.com/nuric/go-api-template/middleware"
+	"github.com/nuric/go-api-template/static"
 	"github.com/nuric/go-api-template/templates"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -43,12 +47,46 @@ var db *gorm.DB
 var ss sessions.Store
 var em email.Emailer
 
+type Config struct {
+	Mux        *http.ServeMux
+	Database   *gorm.DB
+	Store      sessions.Store
+	Emailer    email.Emailer
+	CSRFSecret string
+	Debug      bool
+}
+
 // SetDB sets the global database connection
-func Set(database *gorm.DB, store sessions.Store, emailer email.Emailer) {
-	db = database
-	ss = store
-	em = emailer
-	log.Debug().Str("database", db.Name()).Type("store", store).Type("emailer", emailer).Msg("Database and session store set")
+func Setup(c Config) http.Handler {
+	db = c.Database
+	ss = c.Store
+	em = c.Emailer
+	log.Debug().Str("database", db.Name()).Type("store", ss).Type("emailer", em).Msg("Database and session store set")
+	// ---------------------------
+	// Handle static files
+	mux := c.Mux
+	if mux == nil {
+		mux = http.NewServeMux()
+	}
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static.FS)))
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/favicon.ico")
+	})
+	// Our routes
+	mux.Handle("/login", LoginPage{})
+	mux.Handle("GET /logout", LogoutPage{})
+	mux.Handle("/signup", SignUpPage{})
+	mux.Handle("/verify-email", VerifyEmailPage{})
+	mux.Handle("/reset-password", ResetPasswordPage{})
+	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{}))
+	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
+	// Middleware
+	var handler http.Handler = mux
+	// https://github.com/gorilla/csrf/issues/190
+	handler = auth.UserMiddleware(handler, db, ss)
+	handler = csrf.Protect([]byte(c.CSRFSecret), csrf.Secure(!c.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
+	handler = middleware.NotFoundRenderer(handler)
+	return handler
 }
 
 type Validator interface {
