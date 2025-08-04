@@ -115,21 +115,10 @@ type LoginForm struct {
 	ForgotPassword ForgotPasswordForm
 }
 
-func (f *LoginForm) Validate() (ok bool) {
-	ok = true
-	if f.Email == "" {
-		f.EmailError = errors.New("email is required")
-		ok = false
-	}
-	if f.Password == "" {
-		f.PasswordError = errors.New("password is required")
-		ok = false
-	}
-	if len(f.Password) < 6 {
-		f.PasswordError = errors.New("password must be at least 6 characters long")
-		ok = false
-	}
-	return
+func (f *LoginForm) Validate() bool {
+	f.EmailError = ValidateEmail(f.Email)
+	f.PasswordError = ValidatePassword(f.Password)
+	return f.EmailError == nil && f.PasswordError == nil
 }
 
 type ForgotPasswordForm struct {
@@ -140,11 +129,7 @@ type ForgotPasswordForm struct {
 	CSRF       template.HTML
 }
 
-func (f *ForgotPasswordForm) Validate() (ok bool) {
-	ok = true
-	if f.Email == "" {
-		f.EmailError = errors.New("email is required")
-		ok = false
-	}
-	return
+func (f *ForgotPasswordForm) Validate() bool {
+	f.EmailError = ValidateEmail(f.Email)
+	return f.EmailError == nil
 }

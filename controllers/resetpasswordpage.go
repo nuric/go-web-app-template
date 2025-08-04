@@ -27,25 +27,17 @@ type ResetPasswordPage struct {
 	CSRF                 template.HTML
 }
 
-func (p *ResetPasswordPage) Validate() (ok bool) {
-	ok = true
-	if p.Email == "" {
-		p.EmailError = errors.New("email is required")
-		ok = false
-	}
-	if p.Token == "" {
-		p.TokenError = errors.New("reset token is required")
-		ok = false
-	}
-	if p.NewPassword == "" {
-		p.NewPasswordError = errors.New("new password is required")
-		ok = false
-	}
+func (p *ResetPasswordPage) Validate() bool {
+	p.EmailError = ValidateEmail(p.Email)
+	p.TokenError = ValidateToken(p.Token)
+	p.NewPasswordError = ValidatePassword(p.NewPassword)
 	if p.NewPassword != p.ConfirmPassword {
 		p.ConfirmPasswordError = errors.New("passwords do not match")
-		ok = false
 	}
-	return
+	return p.EmailError == nil &&
+		p.TokenError == nil &&
+		p.NewPasswordError == nil &&
+		p.ConfirmPasswordError == nil
 }
 
 func (p ResetPasswordPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {

@@ -1,10 +1,9 @@
 package controllers
 
 import (
-	"fmt"
+	"errors"
 	"html/template"
 	"net/http"
-	"regexp"
 
 	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
@@ -24,29 +23,15 @@ type SignUpPage struct {
 	Error                error
 }
 
-func (p *SignUpPage) Validate() (ok bool) {
-	ok = true
-	if p.Email == "" {
-		p.EmailError = fmt.Errorf("email is required")
-		ok = false
-	}
-	if p.Password == "" {
-		p.PasswordError = fmt.Errorf("password is required")
-		ok = false
-	}
+func (p *SignUpPage) Validate() bool {
+	p.EmailError = ValidateEmail(p.Email)
+	p.PasswordError = ValidatePassword(p.Password)
 	if p.Password != p.ConfirmPassword {
-		p.ConfirmPasswordError = fmt.Errorf("passwords do not match")
-		ok = false
+		p.ConfirmPasswordError = errors.New("passwords do not match")
 	}
-	if len(p.Password) < 8 ||
-		!regexp.MustCompile(`[a-z]`).MatchString(p.Password) ||
-		!regexp.MustCompile(`[A-Z]`).MatchString(p.Password) ||
-		!regexp.MustCompile(`\d`).MatchString(p.Password) ||
-		!regexp.MustCompile(`[@$!%*?&=]`).MatchString(p.Password) {
-		p.PasswordError = fmt.Errorf("password must be at least 8 characters long, contain at least one lowercase letter, one uppercase letter, one digit, and one special character")
-		ok = false
-	}
-	return
+	return p.EmailError == nil &&
+		p.PasswordError == nil &&
+		p.ConfirmPasswordError == nil
 }
 
 func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +65,7 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := db.Create(&newUser).Error; err != nil {
 		log.Error().Err(err).Msg("could not create user")
-		p.Error = fmt.Errorf("could not create user")
+		p.Error = errors.New("could not create user")
 		render(w, "signup.html", p)
 		return
 	}

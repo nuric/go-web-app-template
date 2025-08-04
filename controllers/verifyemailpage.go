@@ -4,7 +4,6 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"regexp"
 	"time"
 
 	"github.com/gorilla/csrf"
@@ -22,19 +21,9 @@ type VerifyEmailPage struct {
 	Message    string
 }
 
-func (p *VerifyEmailPage) Validate() (ok bool) {
-	ok = true
-	if p.Token == "" {
-		p.TokenError = errors.New("token is required")
-		ok = false
-	} else {
-		// Validate token format (simple regex for demonstration)
-		if matched, _ := regexp.MatchString(`^[a-zA-Z0-9_-]+$`, p.Token); !matched {
-			p.TokenError = errors.New("invalid token format")
-			ok = false
-		}
-	}
-	return
+func (p *VerifyEmailPage) Validate() bool {
+	p.TokenError = ValidateToken(p.Token)
+	return p.TokenError == nil
 }
 
 func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
