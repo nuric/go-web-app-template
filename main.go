@@ -85,6 +85,7 @@ func main() {
 	mux.Handle("GET /logout", controllers.LogoutPage{})
 	mux.Handle("/signup", controllers.SignUpPage{})
 	mux.Handle("/verify-email", controllers.VerifyEmailPage{})
+	mux.Handle("/reset-password", controllers.ResetPasswordPage{})
 	mux.Handle("GET /dashboard", auth.VerifiedOnly(controllers.DashboardPage{}))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware

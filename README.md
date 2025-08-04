@@ -31,7 +31,6 @@ Then use the [samples.http](samples.http) file to test the API which works with 
 
 ## TODO
 
-- Add password reset functionality
 - Implement user profile management
 - Rate limit
 
