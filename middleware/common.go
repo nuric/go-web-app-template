@@ -20,6 +20,7 @@ func ZeroLoggerMetrics(next http.Handler) http.Handler {
 			Int("status", status).
 			Int("size", size).
 			Dur("duration", duration).
+			Str("remote_ip", r.RemoteAddr).
 			Msg("")
 	})(next)
 	handler = hlog.NewHandler(log.Logger)(handler)
