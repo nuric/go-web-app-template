@@ -79,6 +79,7 @@ func main() {
 	}
 	handler := controllers.Setup(config)
 	// Middleware
+	handler = middleware.NewRateLimiter(7, 14, 15*time.Minute).Limit(handler)
 	handler = middleware.ZeroLoggerMetrics(handler)
 	handler = middleware.Recover(handler)
 	// ---------------------------
