@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/gorilla/csrf"
@@ -53,13 +54,13 @@ func Setup(c Config) http.Handler {
 		http.ServeFile(w, r, "static/favicon.ico")
 	})
 	// Our routes
-	mux.Handle("/login", LoginPage{BasePage: BasePage{Title: "Login"}})
+	mux.Handle("/login", LoginPage{BasePage: BasePage{Title: "Login", Template: "login.html"}})
 	mux.Handle("GET /logout", LogoutPage{})
-	mux.Handle("/signup", SignUpPage{BasePage: BasePage{Title: "Sign Up"}})
-	mux.Handle("/verify-email", VerifyEmailPage{BasePage: BasePage{Title: "Verify Email"}})
-	mux.Handle("/reset-password", ResetPasswordPage{BasePage: BasePage{Title: "Reset Password"}})
-	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{BasePage: BasePage{Title: "Dashboard"}}))
-	mux.Handle("/account", auth.VerifiedOnly(AccountPage{BasePage: BasePage{Title: "Account"}}))
+	mux.Handle("/signup", SignUpPage{BasePage: BasePage{Title: "Sign Up", Template: "signup.html"}})
+	mux.Handle("/verify-email", VerifyEmailPage{BasePage: BasePage{Title: "Verify Email", Template: "verify_email.html"}})
+	mux.Handle("/reset-password", ResetPasswordPage{BasePage: BasePage{Title: "Reset Password", Template: "reset_password.html"}})
+	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{BasePage: BasePage{Title: "Dashboard", Template: "dashboard.html"}}))
+	mux.Handle("/account", auth.VerifiedOnly(AccountPage{BasePage: BasePage{Title: "Account", Template: "account.html"}}))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux
@@ -95,13 +96,29 @@ func DecodeValidForm[T Validator](v T, r *http.Request) error {
 	return nil
 }
 
+type AppPager interface {
+	SetCSRFToken(r *http.Request)
+	TemplateName() string
+}
+
 type BasePage struct {
-	Title string
+	Title    string
+	Template string
+	CSRF     template.HTML
+}
+
+func (p *BasePage) SetCSRFToken(r *http.Request) {
+	p.CSRF = csrf.TemplateField(r)
+}
+
+func (p BasePage) TemplateName() string {
+	return p.Template
 }
 
 // helper to reduce boilerplate in controllers
-func render(w http.ResponseWriter, name string, data any) {
-	templates.RenderHTML(w, name, data)
+func render(r *http.Request, w http.ResponseWriter, data AppPager) {
+	data.SetCSRFToken(r)
+	templates.RenderHTML(w, data.TemplateName(), data)
 }
 
 func sendTemplateEmail(to, subject, templateName string, data any) error {

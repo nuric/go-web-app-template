@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
 
-	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
@@ -20,7 +18,6 @@ type SignUpPage struct {
 	PasswordError        error
 	ConfirmPassword      string `schema:"confirmPassword"`
 	ConfirmPasswordError error
-	CSRF                 template.HTML
 	Error                error
 }
 
@@ -42,9 +39,8 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	p.CSRF = csrf.TemplateField(r)
 	if r.Method == http.MethodGet {
-		render(w, "signup.html", p)
+		render(r, w, &p)
 		return
 	}
 	r.ParseForm()
@@ -55,7 +51,7 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// ---------------------------
 	if err := DecodeValidForm(&p, r); err != nil {
 		p.Error = err
-		render(w, "signup.html", p)
+		render(r, w, &p)
 		return
 	}
 	newUser := models.User{
@@ -67,7 +63,7 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := db.Create(&newUser).Error; err != nil {
 		log.Error().Err(err).Msg("could not create user")
 		p.Error = errors.New("could not create user")
-		render(w, "signup.html", p)
+		render(r, w, &p)
 		return
 	}
 

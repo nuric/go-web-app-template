@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
 
-	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
@@ -25,7 +23,6 @@ type ChangeEmailForm struct {
 	EmailError error
 	Token      string `schema:"token"`
 	TokenError error
-	CSRF       template.HTML
 	Error      error
 }
 
@@ -44,7 +41,6 @@ type ChangePasswordForm struct {
 	NewPasswordError     error
 	ConfirmPassword      string `schema:"confirmPassword"`
 	ConfirmPasswordError error
-	CSRF                 template.HTML
 	Error                error
 }
 
@@ -59,11 +55,9 @@ func (f *ChangePasswordForm) Validate() bool {
 
 func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.User = auth.GetCurrentUser(r)
-	p.ChangeEmailForm.CSRF = csrf.TemplateField(r)
-	p.ChangePasswordForm.CSRF = csrf.TemplateField(r)
 	// ---------------------------
 	if r.Method == http.MethodGet {
-		render(w, "account.html", p)
+		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -73,34 +67,34 @@ func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.ChangeEmailForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		if err := sendEmailVerification(p.User.ID, f.Email); err != nil {
 			f.Error = err
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		// Switch to next action
 		f.Action = "change_email"
-		render(w, "account.html", p)
+		render(r, w, &p)
 	case "change_email":
 		f := &p.ChangeEmailForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		if err := checkEmailVerification(p.User.ID, f.Email, f.Token); err != nil {
 			f.Error = err
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		// Update the email of the user
 		if err := db.Model(&p.User).Update("email", f.Email).Error; err != nil {
 			log.Error().Err(err).Msg("could not update user email")
 			f.Error = errors.New("could not change user email")
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
@@ -108,19 +102,19 @@ func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.ChangePasswordForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		if !utils.VerifyPassword(p.User.Password, f.CurrentPassword) {
 			f.CurrentPasswordError = errors.New("please enter your current password")
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		hashedPassword := utils.HashPassword(f.NewPassword)
 		if err := db.Model(&p.User).Update("password", hashedPassword).Error; err != nil {
 			log.Error().Err(err).Msg("could not change user password")
 			f.Error = errors.New("could not change user password")
-			render(w, "account.html", p)
+			render(r, w, &p)
 			return
 		}
 		// Redirect to GET current page

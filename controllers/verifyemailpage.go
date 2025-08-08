@@ -2,11 +2,9 @@ package controllers
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
@@ -17,7 +15,6 @@ type VerifyEmailPage struct {
 	BasePage
 	Token      string `schema:"token"`
 	TokenError error
-	CSRF       template.HTML
 	Error      error
 	Message    string
 }
@@ -74,7 +71,6 @@ func checkEmailVerification(userID uint, email string, userToken string) error {
 
 func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
-	p.CSRF = csrf.TemplateField(r)
 	switch {
 	case user.ID != 0 && user.EmailVerified:
 		// User is logged in and email is verified, redirect to dashboard
@@ -87,7 +83,7 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == http.MethodGet {
-		render(w, "verify_email.html", p)
+		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -96,21 +92,21 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "resend_verification":
 		if err := sendEmailVerification(user.ID, user.Email); err != nil {
 			p.Error = err
-			render(w, "verify_email.html", p)
+			render(r, w, &p)
 			return
 		}
 		p.Message = "Verification email resent. Please check your inbox."
-		render(w, "verify_email.html", p)
+		render(r, w, &p)
 	case "verify_email":
 		// Verify the user's email using the provided token
 		if err := DecodeValidForm(&p, r); err != nil {
 			p.Error = err
-			render(w, "verify_email.html", p)
+			render(r, w, &p)
 			return
 		}
 		if err := checkEmailVerification(user.ID, user.Email, p.Token); err != nil {
 			p.Error = err
-			render(w, "verify_email.html", p)
+			render(r, w, &p)
 			return
 		}
 		// Update the user's email verification status

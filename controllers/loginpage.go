@@ -3,11 +3,9 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
@@ -30,11 +28,9 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/verify-email", http.StatusSeeOther)
 		return
 	}
-	p.LoginForm.CSRF = csrf.TemplateField(r)
-	p.ForgotPasswordForm.CSRF = csrf.TemplateField(r)
 	// ---------------------------
 	if r.Method == http.MethodGet {
-		render(w, "login.html", p)
+		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -44,26 +40,26 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.LoginForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		var user models.User
 		if err := db.Where("email = ?", f.Email).First(&user).Error; err != nil {
 			log.Debug().Err(err).Uint("userId", user.ID).Msg("could not find user")
 			f.Error = errors.New("invalid email or password")
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		if !utils.VerifyPassword(user.Password, f.Password) {
 			log.Debug().Uint("userId", user.ID).Msg("password verification failed")
 			f.Error = errors.New("invalid email or password")
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		if err := auth.LogUserIn(w, r, user.ID, ss); err != nil {
 			log.Error().Err(err).Uint("userId", user.ID).Msg("could not log user in")
 			f.Error = errors.New("could not log user in")
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		log.Debug().Uint("userId", user.ID).Str("email", f.Email).Msg("User logged in successfully")
@@ -74,7 +70,7 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f.DialogOpen = true
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		resetToken := models.Token{
@@ -86,7 +82,7 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := db.Create(&resetToken).Error; err != nil {
 			log.Error().Err(err).Msg("could not create password reset token")
 			f.Error = errors.New("could not send password reset email")
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		emailData := map[string]any{
@@ -95,7 +91,7 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := sendTemplateEmail(f.Email, "Password Reset", "reset_password.txt", emailData); err != nil {
 			log.Error().Err(err).Msg("could not send password reset email")
 			f.Error = err
-			render(w, "login.html", p)
+			render(r, w, &p)
 			return
 		}
 		log.Debug().Str("email", f.Email).Msg("Forgot password request")
@@ -112,7 +108,6 @@ type LoginForm struct {
 	Password      string `schema:"password"`
 	PasswordError error
 	Error         error
-	CSRF          template.HTML
 }
 
 func (f *LoginForm) Validate() bool {
@@ -126,7 +121,6 @@ type ForgotPasswordForm struct {
 	EmailError error
 	Error      error
 	DialogOpen bool
-	CSRF       template.HTML
 }
 
 func (f *ForgotPasswordForm) Validate() bool {

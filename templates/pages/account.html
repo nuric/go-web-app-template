@@ -11,6 +11,8 @@
 
 <hr>
 
+{{ $csrf := .CSRF }}
+
 <section>
     <h2>Change Email</h2>
     {{ with .ChangeEmailForm }}
@@ -38,7 +40,7 @@
 
         {{ end }}
 
-        {{ .CSRF }}
+        {{ $csrf }}
         {{ if .Error }}
         <p class="error">{{ .Error }}</p>
         {{ end }}
@@ -80,7 +82,7 @@
         <small id="confirmPasswordError">{{ .ConfirmPasswordError }}</small>
         {{ end }}
 
-        {{ .CSRF }}
+        {{ $csrf }}
         {{ if .Error }}
         <p class="error">{{ .Error }}</p>
         {{ end }}

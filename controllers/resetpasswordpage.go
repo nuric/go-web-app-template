@@ -2,11 +2,9 @@ package controllers
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
@@ -25,7 +23,6 @@ type ResetPasswordPage struct {
 	ConfirmPassword      string `schema:"confirmPassword"`
 	ConfirmPasswordError error
 	Error                error
-	CSRF                 template.HTML
 }
 
 func (p *ResetPasswordPage) Validate() bool {
@@ -49,10 +46,9 @@ func (p ResetPasswordPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	p.CSRF = csrf.TemplateField(r)
 	p.Email = r.URL.Query().Get("email")
 	if r.Method == http.MethodGet {
-		render(w, "reset_password.html", p)
+		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -64,7 +60,7 @@ func (p ResetPasswordPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := DecodeValidForm(&p, r); err != nil {
 		p.Error = err
-		render(w, "reset_password.html", p)
+		render(r, w, &p)
 		return
 	}
 	var token models.Token
@@ -76,13 +72,13 @@ func (p ResetPasswordPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		First(&token).Error; err != nil {
 		log.Error().Err(err).Msg("could not find valid token")
 		p.Error = errors.New("invalid token")
-		render(w, "reset_password.html", p)
+		render(r, w, &p)
 		return
 	}
 	if p.Token != token.Token {
 		log.Error().Msg("password reset token mismatch")
 		p.Error = errors.New("invalid token")
-		render(w, "reset_password.html", p)
+		render(r, w, &p)
 		return
 	}
 	// Reset the user's password
@@ -90,7 +86,7 @@ func (p ResetPasswordPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil || rows == 0 {
 		log.Error().Err(err).Msg("could not update user password")
 		p.Error = errors.New("could not update password")
-		render(w, "reset_password.html", p)
+		render(r, w, &p)
 		return
 	}
 	// Delete the token after successful password reset

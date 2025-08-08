@@ -8,6 +8,8 @@
     </div>
   </header>
 
+  {{ $csrf := .CSRF }}
+
   {{ with .LoginForm }}
   <form method="POST">
     <input type="hidden" name="_action" value="login" />
@@ -25,7 +27,7 @@
     <small id="passwordError">{{ .PasswordError }}</small>
     {{ end }}
 
-    {{ .CSRF }}
+    {{ $csrf }}
     {{ if .Error }}
     <p class="error">{{ .Error }}</p>
     {{ end }}
@@ -61,7 +63,7 @@
         <small id="emailError">{{ .EmailError }}</small>
         {{ end }}
 
-        {{ .CSRF }}
+        {{ $csrf }}
 
         {{ if .Error }}
         <p class="error">{{ .Error }}</p>

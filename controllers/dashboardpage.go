@@ -14,5 +14,5 @@ type DashboardPage struct {
 
 func (p DashboardPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.User = auth.GetCurrentUser(r)
-	render(w, "dashboard.html", p)
+	render(r, w, &p)
 }
