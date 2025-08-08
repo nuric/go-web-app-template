@@ -15,6 +15,7 @@ import (
 )
 
 type LoginPage struct {
+	BasePage
 	LoginForm          LoginForm
 	ForgotPasswordForm ForgotPasswordForm
 }

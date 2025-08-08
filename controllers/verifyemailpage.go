@@ -14,6 +14,7 @@ import (
 )
 
 type VerifyEmailPage struct {
+	BasePage
 	Token      string `schema:"token"`
 	TokenError error
 	CSRF       template.HTML

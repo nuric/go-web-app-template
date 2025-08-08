@@ -14,6 +14,7 @@ import (
 )
 
 type AccountPage struct {
+	BasePage
 	User               models.User
 	ChangeEmailForm    ChangeEmailForm
 	ChangePasswordForm ChangePasswordForm

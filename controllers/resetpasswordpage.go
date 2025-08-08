@@ -15,6 +15,7 @@ import (
 )
 
 type ResetPasswordPage struct {
+	BasePage
 	Email                string `schema:"email"`
 	EmailError           error
 	Token                string `schema:"token"`

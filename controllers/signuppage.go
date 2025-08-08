@@ -13,6 +13,7 @@ import (
 )
 
 type SignUpPage struct {
+	BasePage
 	Email                string `schema:"email"`
 	EmailError           error
 	Password             string `schema:"password"`

@@ -17,26 +17,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// helper to reduce boilerplate in controllers
-func render(w http.ResponseWriter, name string, data any) {
-	templates.RenderHTML(w, name, data)
-}
-
-func sendTemplateEmail(to, subject, templateName string, data any) error {
-	// Render the template to a string
-	body, err := templates.RenderEmail(templateName, data)
-	if err != nil {
-		log.Error().Err(err).Msg("could not render email template")
-		return errors.New("could not render email template")
-	}
-	// Send the email using the emailer
-	if err := em.SendEmail(to, subject, body); err != nil {
-		log.Error().Err(err).Msg("could not send email")
-		return errors.New("could not send email")
-	}
-	return nil
-}
-
 // This is the global database connection exposed to the controllers. It should
 // be thought of as a dependency of the controllers. Because the nested structure
 // can be complex, we are using a global variable. During unit testing it may be
@@ -73,13 +53,13 @@ func Setup(c Config) http.Handler {
 		http.ServeFile(w, r, "static/favicon.ico")
 	})
 	// Our routes
-	mux.Handle("/login", LoginPage{})
+	mux.Handle("/login", LoginPage{BasePage: BasePage{Title: "Login"}})
 	mux.Handle("GET /logout", LogoutPage{})
-	mux.Handle("/signup", SignUpPage{})
-	mux.Handle("/verify-email", VerifyEmailPage{})
-	mux.Handle("/reset-password", ResetPasswordPage{})
-	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{}))
-	mux.Handle("/account", auth.VerifiedOnly(AccountPage{}))
+	mux.Handle("/signup", SignUpPage{BasePage: BasePage{Title: "Sign Up"}})
+	mux.Handle("/verify-email", VerifyEmailPage{BasePage: BasePage{Title: "Verify Email"}})
+	mux.Handle("/reset-password", ResetPasswordPage{BasePage: BasePage{Title: "Reset Password"}})
+	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{BasePage: BasePage{Title: "Dashboard"}}))
+	mux.Handle("/account", auth.VerifiedOnly(AccountPage{BasePage: BasePage{Title: "Account"}}))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux
@@ -111,6 +91,30 @@ func DecodeValidForm[T Validator](v T, r *http.Request) error {
 	}
 	if !v.Validate() {
 		return fmt.Errorf("please correct the errors in the form")
+	}
+	return nil
+}
+
+type BasePage struct {
+	Title string
+}
+
+// helper to reduce boilerplate in controllers
+func render(w http.ResponseWriter, name string, data any) {
+	templates.RenderHTML(w, name, data)
+}
+
+func sendTemplateEmail(to, subject, templateName string, data any) error {
+	// Render the template to a string
+	body, err := templates.RenderEmail(templateName, data)
+	if err != nil {
+		log.Error().Err(err).Msg("could not render email template")
+		return errors.New("could not render email template")
+	}
+	// Send the email using the emailer
+	if err := em.SendEmail(to, subject, body); err != nil {
+		log.Error().Err(err).Msg("could not send email")
+		return errors.New("could not send email")
 	}
 	return nil
 }

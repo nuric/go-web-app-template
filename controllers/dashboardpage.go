@@ -8,6 +8,7 @@ import (
 )
 
 type DashboardPage struct {
+	BasePage
 	User models.User
 }
 
