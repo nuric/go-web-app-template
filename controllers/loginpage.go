@@ -106,13 +106,12 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type LoginForm struct {
-	Email          string `schema:"email"`
-	EmailError     error
-	Password       string `schema:"password"`
-	PasswordError  error
-	Error          error
-	CSRF           template.HTML
-	ForgotPassword ForgotPasswordForm
+	Email         string `schema:"email"`
+	EmailError    error
+	Password      string `schema:"password"`
+	PasswordError error
+	Error         error
+	CSRF          template.HTML
 }
 
 func (f *LoginForm) Validate() bool {
