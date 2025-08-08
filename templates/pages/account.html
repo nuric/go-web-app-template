@@ -1,0 +1,95 @@
+{{template "app_begin.html" .}}
+
+{{define "title"}}Account{{end}}
+
+<section>
+    <h1>Account</h1>
+    <ul>
+        <li><strong>Email:</strong> {{ .User.Email }}</li>
+        <li><strong>Date Joined:</strong> {{ .User.CreatedAt.Format "2006-01-02 15:04:05" }}</li>
+        <li><strong>Email Verified:</strong> {{ if .User.EmailVerified }}Yes{{ else }}No{{ end }}</li>
+    </ul>
+</section>
+
+<hr>
+
+<section>
+    <h2>Change Email</h2>
+    {{ with .ChangeEmailForm }}
+    <form method="POST">
+        <input type="hidden" name="_action"
+            value="{{ with .Action }}{{ . }}{{ else }}request_email_change_token{{ end }}" />
+        <label for="email">Email address</label>
+        <input type="email" id="email" required name="email" autocomplete="email" placeholder="name@example.com"
+            value="{{ .Email }}" {{if .EmailError}}aria-invalid="true" {{end}} {{ if eq .Action "change_email" }}
+            disabled {{end}} aria-describedby="emailError" />
+        {{ if .EmailError }}
+        <small id="emailError">{{ .EmailError }}</small>
+        {{ end }}
+
+        {{ if eq .Action "change_email"}}
+
+        <label for="token">Verification Token</label>
+        <input type="text" id="token" required name="token" placeholder="Enter your token" value="{{ .Token }}" {{if
+            .TokenError}} aria-invalid="true" {{end}} aria-describedby="tokenError" />
+        {{ if .TokenError }}
+        <small id="tokenError">{{ .TokenError }}</small>
+        {{ else }}
+        <small id="tokenHint">We have sent a verification code to the email address. Please enter it above.</small>
+        {{ end }}
+
+        {{ end }}
+
+        {{ .CSRF }}
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
+
+        <button type="submit">{{ if eq .Action "request_email_change_token" }}Verify Email{{ else }}Change Email{{ end
+            }}</button>
+    </form>
+    {{ end }}
+</section>
+
+<hr>
+
+<section>
+    <h2>Change Password</h2>
+    {{ with .ChangePasswordForm }}
+    <form method="POST">
+        <input type="hidden" name="_action" value="change_password" />
+        <label for="current_password">Current Password</label>
+        <input type="password" id="current_password" required name="currentPassword" value="{{ .CurrentPassword }}"
+            autocomplete="current-password" placeholder="Enter your current password" {{if
+            .CurrentPasswordError}}aria-invalid="true" {{end}} aria-describedby="currentPasswordError" />
+        {{ if .CurrentPasswordError }}
+        <small id="currentPasswordError">{{ .CurrentPasswordError }}</small>
+        {{ end }}
+
+        <label for="new_password">New Password</label>
+        <input type="password" id="new_password" required name="newPassword" value="{{ .NewPassword }}"
+            autocomplete="new-password" placeholder="Enter your new password" {{if
+            .NewPasswordError}}aria-invalid="true" {{end}} aria-describedby="newPasswordError" />
+        {{ if .NewPasswordError }}
+        <small id="newPasswordError">{{ .NewPasswordError }}</small>
+        {{ end }}
+
+        <label for="confirm_password">Confirm New Password</label>
+        <input type="password" id="confirm_password" required name="confirmPassword" value="{{ .ConfirmPassword }}"
+            autocomplete="new-password" placeholder="Confirm your new password" {{if
+            .ConfirmPasswordError}}aria-invalid="true" {{end}} aria-describedby="confirmPasswordError" />
+        {{ if .ConfirmPasswordError }}
+        <small id="confirmPasswordError">{{ .ConfirmPasswordError }}</small>
+        {{ end }}
+
+        {{ .CSRF }}
+        {{ if .Error }}
+        <p class="error">{{ .Error }}</p>
+        {{ end }}
+
+        <button type="submit">Change Password</button>
+    </form>
+    {{ end }}
+</section>
+
+{{template "app_end.html" .}}

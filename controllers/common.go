@@ -79,6 +79,7 @@ func Setup(c Config) http.Handler {
 	mux.Handle("/verify-email", VerifyEmailPage{})
 	mux.Handle("/reset-password", ResetPasswordPage{})
 	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{}))
+	mux.Handle("/account", auth.VerifiedOnly(AccountPage{}))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux
