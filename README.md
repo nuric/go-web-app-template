@@ -29,11 +29,6 @@ docker run -p 8080:8080 go-api-template
 
 Then use the [samples.http](samples.http) file to test the API which works with [Rest Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension. You can of course use any other HTTP client like Postman or curl.
 
-## TODO
-
-- Implement user profile management
-- Rate limit
-
 ## Built with
 
 - [env](https://github.com/caarlos0/env) for environment variable based configuration
