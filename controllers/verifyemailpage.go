@@ -53,6 +53,7 @@ func checkEmailVerification(userID uint, email string, userToken string) error {
 	var token models.Token
 	if err := db.Where("user_id = ?", userID).
 		Where("token = ?", userToken).
+		Where("email = ?", email).
 		Where("purpose = ?", "email_verification").
 		Where("expires_at > ?", time.Now()).
 		Order("created_at DESC").
