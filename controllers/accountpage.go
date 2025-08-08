@@ -4,7 +4,6 @@ import (
 	"errors"
 	"html/template"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/csrf"
 	"github.com/nuric/go-api-template/auth"
@@ -77,26 +76,9 @@ func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			render(w, "account.html", p)
 			return
 		}
-		verificationToken := models.Token{
-			UserID:    p.User.ID,
-			Email:     f.Email,
-			Token:     utils.HumanFriendlyToken(),
-			Purpose:   "change_email",
-			ExpiresAt: time.Now().Add(15 * time.Minute),
-		}
-		if err := db.Create(&verificationToken).Error; err != nil {
-			log.Error().Err(err).Msg("could not create email change verification token")
-			f.Error = errors.New("could not create email change verification token")
+		if err := sendEmailVerification(p.User.ID, f.Email); err != nil {
+			f.Error = err
 			render(w, "account.html", p)
-			return
-		}
-		emailData := map[string]any{
-			"Token": verificationToken.Token,
-		}
-		if err := sendTemplateEmail(f.Email, "Email Change Verification", "verify_email.txt", emailData); err != nil {
-			log.Error().Err(err).Msg("could not send email")
-			f.Error = errors.New("could not send verification email")
-			render(w, "verify_email.html", p)
 			return
 		}
 		// Switch to next action
@@ -109,24 +91,17 @@ func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			render(w, "account.html", p)
 			return
 		}
-		// Verify the token
-		var verificationToken models.Token
-		if err := db.Where("user_id = ? AND email = ? AND token = ? AND purpose = ?", p.User.ID, f.Email, f.Token, "change_email").First(&verificationToken).Error; err != nil {
-			log.Error().Err(err).Msg("could not find verification token")
-			f.Error = errors.New("invalid or expired token")
+		if err := checkEmailVerification(p.User.ID, f.Email, f.Token); err != nil {
+			f.Error = err
 			render(w, "account.html", p)
 			return
 		}
 		// Update the email of the user
-		if err := db.Model(&p.User).Update("email", verificationToken.Email).Error; err != nil {
+		if err := db.Model(&p.User).Update("email", f.Email).Error; err != nil {
 			log.Error().Err(err).Msg("could not update user email")
 			f.Error = errors.New("could not change user email")
 			render(w, "account.html", p)
 			return
-		}
-		// Delete the verification token
-		if err := db.Delete(&verificationToken).Error; err != nil {
-			log.Error().Err(err).Msg("could not delete verification token")
 		}
 		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
 	case "change_password":

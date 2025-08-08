@@ -27,6 +27,50 @@ func (p *VerifyEmailPage) Validate() bool {
 	return p.TokenError == nil
 }
 
+func sendEmailVerification(userID uint, email string) error {
+	newToken := models.Token{
+		UserID:    userID,
+		Token:     utils.HumanFriendlyToken(),
+		Purpose:   "email_verification",
+		ExpiresAt: time.Now().Add(15 * time.Minute),
+	}
+	if err := db.Create(&newToken).Error; err != nil {
+		log.Error().Err(err).Msg("could not create email verification token")
+		return errors.New("could not create verification token")
+	}
+	emailData := map[string]any{
+		"Token": newToken.Token,
+	}
+	if err := sendTemplateEmail(email, "Email Verification", "verify_email.txt", emailData); err != nil {
+		log.Error().Err(err).Msg("could not send verification email")
+		return errors.New("could not send verification email")
+	}
+	return nil
+}
+
+func checkEmailVerification(userID uint, email string, userToken string) error {
+	// Get the last token that hasn't expired
+	var token models.Token
+	if err := db.Where("user_id = ?", userID).
+		Where("token = ?", userToken).
+		Where("purpose = ?", "email_verification").
+		Where("expires_at > ?", time.Now()).
+		Order("created_at DESC").
+		First(&token).Error; err != nil {
+		log.Error().Err(err).Msg("could not find valid token")
+		return errors.New("invalid token or expired token")
+	}
+	// Check if the token matches
+	if token.Token != userToken {
+		return errors.New("invalid token or expired token")
+	}
+	// Delete token as it is now considered used
+	if err := db.Delete(&token).Error; err != nil {
+		log.Error().Err(err).Msg("could not delete token after verification")
+	}
+	return nil
+}
+
 func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
 	p.CSRF = csrf.TemplateField(r)
@@ -49,23 +93,7 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	switch r.PostFormValue("_action") {
 	case "resend_verification":
-		newToken := models.Token{
-			UserID:    user.ID,
-			Token:     utils.HumanFriendlyToken(),
-			Purpose:   "email_verification",
-			ExpiresAt: time.Now().Add(1 * time.Hour),
-		}
-		if err := db.Create(&newToken).Error; err != nil {
-			log.Error().Err(err).Msg("could not create verification token")
-			p.Error = errors.New("could not create verification token")
-			render(w, "verify_email.html", p)
-			return
-		}
-		emailData := map[string]any{
-			"Token": newToken.Token,
-		}
-		if err := sendTemplateEmail(user.Email, "Email Verification", "verify_email.txt", emailData); err != nil {
-			log.Error().Err(err).Msg("could not send email")
+		if err := sendEmailVerification(user.ID, user.Email); err != nil {
 			p.Error = err
 			render(w, "verify_email.html", p)
 			return
@@ -79,23 +107,8 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			render(w, "verify_email.html", p)
 			return
 		}
-		// Get the last token that hasn't expired
-		var token models.Token
-		if err := db.Where("user_id = ?", user.ID).
-			Where("token = ?", p.Token).
-			Where("purpose = ?", "email_verification").
-			Where("expires_at > ?", time.Now()).
-			Order("created_at DESC").
-			First(&token).Error; err != nil {
-			log.Error().Err(err).Msg("could not find valid token")
-			p.Error = errors.New("invalid token")
-			render(w, "verify_email.html", p)
-			return
-		}
-		// Check if the token matches
-		if token.Token != p.Token {
-			log.Error().Msg("token mismatch")
-			p.Error = errors.New("invalid token")
+		if err := checkEmailVerification(user.ID, user.Email, p.Token); err != nil {
+			p.Error = err
 			render(w, "verify_email.html", p)
 			return
 		}
@@ -104,10 +117,6 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Error().Err(err).Msg("could not update user email verification status")
 			p.Error = errors.New("could not verify email")
 			return
-		}
-		// Delete the token after successful verification
-		if err := db.Delete(&token).Error; err != nil {
-			log.Error().Err(err).Msg("could not delete token after verification")
 		}
 		// Redirect to dashboard after successful verification
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)

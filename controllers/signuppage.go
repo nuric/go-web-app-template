@@ -76,7 +76,10 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not log user in after signup", http.StatusInternalServerError)
 		return
 	}
-	// Here you would typically save the user to the database.
+
+	if err := sendEmailVerification(newUser.ID, newUser.Email); err != nil {
+		log.Error().Err(err).Msg("could not send new user email verification")
+	}
 	log.Debug().Str("email", p.Email).Msg("User signed up successfully")
 	// Redirect to dashboard
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
