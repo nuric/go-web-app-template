@@ -81,7 +81,7 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Email:     f.Email,
 			Token:     utils.HumanFriendlyToken(),
 			Purpose:   "reset_password",
-			ExpiresAt: time.Now().Add(1 * time.Hour),
+			ExpiresAt: time.Now().Add(15 * time.Minute),
 		}
 		if err := db.Create(&resetToken).Error; err != nil {
 			log.Error().Err(err).Msg("could not create password reset token")
