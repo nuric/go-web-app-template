@@ -95,7 +95,7 @@
             {{ end }}
         </span>
         <span class="message-text">{{ .Message }}</span>
-        <button class="close-btn" onclick="this.closest('.flash-message').classList.add('fade-out')">
+        <button class="close-btn">
             <i data-feather="x-square"></i>
         </button>
     </div>
@@ -111,10 +111,20 @@
             setTimeout(function () {
                 msg.classList.remove('fade-in');
                 msg.classList.add('fade-out');
+                // Remove the message after the fade-out transition
                 setTimeout(function () {
                     msg.remove();
-                }, 500);
+                }, 500); // match the CSS transition duration
             }, 4000);
+            msg.querySelector('.close-btn').addEventListener('click', function (e) {
+                e.preventDefault();
+                msg.classList.remove('fade-in');
+                msg.classList.add('fade-out');
+                // Remove the message after the fade-out transition
+                setTimeout(function () {
+                    msg.remove();
+                }, 500); // match the CSS transition duration
+            });
         });
     });
 </script>
