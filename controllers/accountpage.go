@@ -74,6 +74,7 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 		// Switch to next action
 		f.Action = "change_email"
+		p.Flash(r, FlashInfo, "Verification email sent. Please check your inbox.")
 	case "change_email":
 		f := &p.ChangeEmailForm
 		if err := DecodeValidForm(f, r); err != nil {
@@ -90,6 +91,7 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 			f.Error = errors.New("could not change user email")
 			return
 		}
+		p.Flash(r, FlashSuccess, "Your email has been changed")
 		p.redirect = r.URL.Path
 	case "change_password":
 		f := &p.ChangePasswordForm

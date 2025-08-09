@@ -87,6 +87,7 @@ func (p *LoginPage) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Debug().Str("email", f.Email).Msg("Forgot password request")
+		p.Flash(r, FlashInfo, "Password reset email sent. Please check your inbox.")
 		p.redirect = fmt.Sprintf("/reset-password?email=%s", f.Email)
 	default:
 		p.notFound = true
