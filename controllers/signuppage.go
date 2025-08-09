@@ -32,26 +32,24 @@ func (p *SignUpPage) Validate() bool {
 		p.ConfirmPasswordError == nil
 }
 
-func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *SignUpPage) Handle(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
 	if user.ID != 0 {
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		p.redirect = "/dashboard"
 		return
 	}
 	// ---------------------------
 	if r.Method == http.MethodGet {
-		render(r, w, &p)
 		return
 	}
 	r.ParseForm()
 	if r.PostFormValue("_action") != "signup" {
-		// Not our action, ignore
+		p.notFound = true
 		return
 	}
 	// ---------------------------
-	if err := DecodeValidForm(&p, r); err != nil {
+	if err := DecodeValidForm(p, r); err != nil {
 		p.Error = err
-		render(r, w, &p)
 		return
 	}
 	newUser := models.User{
@@ -63,7 +61,6 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := db.Create(&newUser).Error; err != nil {
 		log.Error().Err(err).Msg("could not create user")
 		p.Error = errors.New("could not create user")
-		render(r, w, &p)
 		return
 	}
 
@@ -78,5 +75,5 @@ func (p SignUpPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Debug().Str("email", p.Email).Msg("User signed up successfully")
 	// Redirect to dashboard
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	p.redirect = "/dashboard"
 }

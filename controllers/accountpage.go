@@ -53,11 +53,10 @@ func (f *ChangePasswordForm) Validate() bool {
 	return f.CurrentPasswordError == nil && f.NewPasswordError == nil && f.ConfirmPasswordError == nil
 }
 
-func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 	p.User = auth.GetCurrentUser(r)
 	// ---------------------------
 	if r.Method == http.MethodGet {
-		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -67,59 +66,51 @@ func (p AccountPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.ChangeEmailForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		if err := sendEmailVerification(p.User.ID, f.Email); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		// Switch to next action
 		f.Action = "change_email"
-		render(r, w, &p)
 	case "change_email":
 		f := &p.ChangeEmailForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		if err := checkEmailVerification(p.User.ID, f.Email, f.Token); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		// Update the email of the user
 		if err := db.Model(&p.User).Update("email", f.Email).Error; err != nil {
 			log.Error().Err(err).Msg("could not update user email")
 			f.Error = errors.New("could not change user email")
-			render(r, w, &p)
 			return
 		}
-		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+		p.redirect = r.URL.Path
 	case "change_password":
 		f := &p.ChangePasswordForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		if !utils.VerifyPassword(p.User.Password, f.CurrentPassword) {
 			f.CurrentPasswordError = errors.New("please enter your current password")
-			render(r, w, &p)
 			return
 		}
 		hashedPassword := utils.HashPassword(f.NewPassword)
 		if err := db.Model(&p.User).Update("password", hashedPassword).Error; err != nil {
 			log.Error().Err(err).Msg("could not change user password")
 			f.Error = errors.New("could not change user password")
-			render(r, w, &p)
 			return
 		}
 		// Redirect to GET current page
-		http.Redirect(w, r, r.URL.Path, http.StatusSeeOther)
+		p.Flash(r, FlashSuccess, "Your password has been changed")
+		p.redirect = r.URL.Path
 	default:
-		http.NotFound(w, r)
+		p.notFound = true
 	}
 }

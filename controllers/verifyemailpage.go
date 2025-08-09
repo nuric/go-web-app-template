@@ -69,21 +69,20 @@ func checkEmailVerification(userID uint, email string, userToken string) error {
 	return nil
 }
 
-func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *VerifyEmailPage) Handle(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
 	switch {
 	case user.ID != 0 && user.EmailVerified:
 		// User is logged in and email is verified, redirect to dashboard
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		p.redirect = "/dashboard"
 		return
 	case user.ID != 0 && !user.EmailVerified:
 		// We'll handle this case below
 	default:
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		p.redirect = "/login"
 		return
 	}
 	if r.Method == http.MethodGet {
-		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -92,21 +91,17 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "resend_verification":
 		if err := sendEmailVerification(user.ID, user.Email); err != nil {
 			p.Error = err
-			render(r, w, &p)
 			return
 		}
 		p.Message = "Verification email resent. Please check your inbox."
-		render(r, w, &p)
 	case "verify_email":
 		// Verify the user's email using the provided token
-		if err := DecodeValidForm(&p, r); err != nil {
+		if err := DecodeValidForm(p, r); err != nil {
 			p.Error = err
-			render(r, w, &p)
 			return
 		}
 		if err := checkEmailVerification(user.ID, user.Email, p.Token); err != nil {
 			p.Error = err
-			render(r, w, &p)
 			return
 		}
 		// Update the user's email verification status
@@ -116,8 +111,8 @@ func (p VerifyEmailPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Redirect to dashboard after successful verification
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		p.redirect = "/dashboard"
 	default:
-		http.NotFound(w, r)
+		p.notFound = true
 	}
 }

@@ -18,19 +18,18 @@ type LoginPage struct {
 	ForgotPasswordForm ForgotPasswordForm
 }
 
-func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *LoginPage) Handle(w http.ResponseWriter, r *http.Request) {
 	user := auth.GetCurrentUser(r)
 	switch {
 	case user.ID != 0 && user.EmailVerified:
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		p.redirect = "/dashboard"
 		return
 	case user.ID != 0 && !user.EmailVerified:
-		http.Redirect(w, r, "/verify-email", http.StatusSeeOther)
+		p.redirect = "/verify-email"
 		return
 	}
 	// ---------------------------
 	if r.Method == http.MethodGet {
-		render(r, w, &p)
 		return
 	}
 	// ---------------------------
@@ -40,37 +39,32 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f := &p.LoginForm
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		var user models.User
 		if err := db.Where("email = ?", f.Email).First(&user).Error; err != nil {
 			log.Debug().Err(err).Uint("userId", user.ID).Msg("could not find user")
 			f.Error = errors.New("invalid email or password")
-			render(r, w, &p)
 			return
 		}
 		if !utils.VerifyPassword(user.Password, f.Password) {
 			log.Debug().Uint("userId", user.ID).Msg("password verification failed")
 			f.Error = errors.New("invalid email or password")
-			render(r, w, &p)
 			return
 		}
 		if err := auth.LogUserIn(w, r, user.ID, ss); err != nil {
 			log.Error().Err(err).Uint("userId", user.ID).Msg("could not log user in")
 			f.Error = errors.New("could not log user in")
-			render(r, w, &p)
 			return
 		}
 		log.Debug().Uint("userId", user.ID).Str("email", f.Email).Msg("User logged in successfully")
 		// Redirect to dashboard
-		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		p.redirect = "/dashboard"
 	case "forgot_password":
 		f := &p.ForgotPasswordForm
 		f.DialogOpen = true
 		if err := DecodeValidForm(f, r); err != nil {
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		resetToken := models.Token{
@@ -82,7 +76,6 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := db.Create(&resetToken).Error; err != nil {
 			log.Error().Err(err).Msg("could not create password reset token")
 			f.Error = errors.New("could not send password reset email")
-			render(r, w, &p)
 			return
 		}
 		emailData := map[string]any{
@@ -91,14 +84,12 @@ func (p LoginPage) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err := sendTemplateEmail(f.Email, "Password Reset", "reset_password.txt", emailData); err != nil {
 			log.Error().Err(err).Msg("could not send password reset email")
 			f.Error = err
-			render(r, w, &p)
 			return
 		}
 		log.Debug().Str("email", f.Email).Msg("Forgot password request")
-		redirect := fmt.Sprintf("/reset-password?email=%s", f.Email)
-		http.Redirect(w, r, redirect, http.StatusSeeOther)
+		p.redirect = fmt.Sprintf("/reset-password?email=%s", f.Email)
 	default:
-		http.NotFound(w, r)
+		p.notFound = true
 	}
 }
 

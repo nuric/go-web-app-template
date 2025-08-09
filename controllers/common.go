@@ -55,13 +55,25 @@ func Setup(c Config) http.Handler {
 		http.ServeFile(w, r, "static/favicon.ico")
 	})
 	// Our routes
-	mux.Handle("/login", LoginPage{BasePage: BasePage{Title: "Login", Template: "login.html"}})
+	mux.Handle("/login", PageHandler(func() AppPager {
+		return &LoginPage{BasePage: BasePage{Title: "Login", Template: "login.html"}}
+	}))
 	mux.Handle("GET /logout", LogoutPage{})
-	mux.Handle("/signup", SignUpPage{BasePage: BasePage{Title: "Sign Up", Template: "signup.html"}})
-	mux.Handle("/verify-email", VerifyEmailPage{BasePage: BasePage{Title: "Verify Email", Template: "verify_email.html"}})
-	mux.Handle("/reset-password", ResetPasswordPage{BasePage: BasePage{Title: "Reset Password", Template: "reset_password.html"}})
-	mux.Handle("GET /dashboard", auth.VerifiedOnly(DashboardPage{BasePage: BasePage{Title: "Dashboard", Template: "dashboard.html"}}))
-	mux.Handle("/account", auth.VerifiedOnly(AccountPage{BasePage: BasePage{Title: "Account", Template: "account.html"}}))
+	mux.Handle("/signup", PageHandler(func() AppPager {
+		return &SignUpPage{BasePage: BasePage{Title: "Sign Up", Template: "signup.html"}}
+	}))
+	mux.Handle("/verify-email", PageHandler(func() AppPager {
+		return &VerifyEmailPage{BasePage: BasePage{Title: "Verify Email", Template: "verify_email.html"}}
+	}))
+	mux.Handle("/reset-password", PageHandler(func() AppPager {
+		return &ResetPasswordPage{BasePage: BasePage{Title: "Reset Password", Template: "reset_password.html"}}
+	}))
+	mux.Handle("GET /dashboard", auth.VerifiedOnly(PageHandler(func() AppPager {
+		return &DashboardPage{BasePage: BasePage{Title: "Dashboard", Template: "dashboard.html"}}
+	})))
+	mux.Handle("/account", auth.VerifiedOnly(PageHandler(func() AppPager {
+		return &AccountPage{BasePage: BasePage{Title: "Account", Template: "account.html"}}
+	})))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux
@@ -98,8 +110,12 @@ func DecodeValidForm[T Validator](v T, r *http.Request) error {
 }
 
 type AppPager interface {
-	Fill(r *http.Request)
 	TemplateName() string
+	PreHandle(r *http.Request)
+	Handle(w http.ResponseWriter, r *http.Request)
+	PostHandle(w http.ResponseWriter, r *http.Request)
+	Redirect() string
+	NotFound() bool
 }
 
 type FlashMessage struct {
@@ -117,6 +133,22 @@ type BasePage struct {
 	CSRF template.HTML
 	// Flash messages to be displayed on the page
 	FlashMessages []FlashMessage
+	// Used for redirects after form submissions
+	redirect string
+	// Indicates whether the page or action was not found
+	notFound bool
+}
+
+func (p BasePage) TemplateName() string {
+	return p.Template
+}
+
+func (p BasePage) Redirect() string {
+	return p.redirect
+}
+
+func (p BasePage) NotFound() bool {
+	return p.notFound
 }
 
 const (
@@ -126,18 +158,7 @@ const (
 	FlashError   = "error"
 )
 
-func (p *BasePage) Flash(w http.ResponseWriter, r *http.Request, level string, message string) {
-	session, err := ss.Get(r, "flash")
-	if err != nil {
-		log.Error().Err(err).Msg("could not get flash session")
-	}
-	session.AddFlash(fmt.Sprintf("%s$$%s", level, message))
-	if err := session.Save(r, w); err != nil {
-		log.Error().Err(err).Msg("could not save flash session")
-	}
-}
-
-func (p *BasePage) Fill(r *http.Request) {
+func (p *BasePage) PreHandle(r *http.Request) {
 	p.CSRF = csrf.TemplateField(r)
 	session, err := ss.Get(r, "flash")
 	if err != nil {
@@ -158,16 +179,53 @@ func (p *BasePage) Fill(r *http.Request) {
 	}
 }
 
-func (p BasePage) TemplateName() string {
-	return p.Template
+func (p *BasePage) Flash(r *http.Request, level string, message string) {
+	session, err := ss.Get(r, "flash")
+	if err != nil {
+		log.Error().Err(err).Msg("could not get flash session")
+	}
+	session.AddFlash(fmt.Sprintf("%s$$%s", level, message))
 }
 
-// helper to reduce boilerplate in controllers
-func render(r *http.Request, w http.ResponseWriter, data AppPager) {
-	data.Fill(r)
-	templates.RenderHTML(w, data.TemplateName(), data)
+func (p *BasePage) Handle(w http.ResponseWriter, r *http.Request) {
+	// This is a no-op in the base page, but can be overridden by derived pages
 }
 
+func (p *BasePage) PostHandle(w http.ResponseWriter, r *http.Request) {
+	session, err := ss.Get(r, "flash")
+	if err != nil {
+		log.Error().Err(err).Msg("could not get flash session")
+		return
+	}
+	if err := session.Save(r, w); err != nil {
+		log.Error().Err(err).Msg("could not save flash session")
+	}
+}
+
+func PageHandler(factory func() AppPager) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page := factory()
+		if page.TemplateName() == "" {
+			http.NotFound(w, r)
+			return
+		}
+		page.PreHandle(r)
+		page.Handle(w, r)
+		page.PostHandle(w, r)
+		switch {
+		case page.NotFound():
+			http.NotFound(w, r)
+			return
+		case page.Redirect() != "":
+			http.Redirect(w, r, page.Redirect(), http.StatusSeeOther)
+			return
+		default:
+			templates.RenderHTML(w, page.TemplateName(), page)
+		}
+	})
+}
+
+// Helper function to send a template email
 func sendTemplateEmail(to, subject, templateName string, data any) error {
 	// Render the template to a string
 	body, err := templates.RenderEmail(templateName, data)
