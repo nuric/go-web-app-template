@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
@@ -97,18 +98,64 @@ func DecodeValidForm[T Validator](v T, r *http.Request) error {
 }
 
 type AppPager interface {
-	SetCSRFToken(r *http.Request)
+	Fill(r *http.Request)
 	TemplateName() string
 }
 
-type BasePage struct {
-	Title    string
-	Template string
-	CSRF     template.HTML
+type FlashMessage struct {
+	Level   string
+	Message string
 }
 
-func (p *BasePage) SetCSRFToken(r *http.Request) {
+type BasePage struct {
+	// Page title used in <title>
+	Title string
+	// Template file name to render
+	Template string
+	// Used to protect form submissions. Note that all forms on the same page
+	// share the same CSRF token.
+	CSRF template.HTML
+	// Flash messages to be displayed on the page
+	FlashMessages []FlashMessage
+}
+
+const (
+	FlashInfo    = "info"
+	FlashSuccess = "success"
+	FlashWarning = "warning"
+	FlashError   = "error"
+)
+
+func (p *BasePage) Flash(w http.ResponseWriter, r *http.Request, level string, message string) {
+	session, err := ss.Get(r, "flash")
+	if err != nil {
+		log.Error().Err(err).Msg("could not get flash session")
+	}
+	session.AddFlash(fmt.Sprintf("%s$$%s", level, message))
+	if err := session.Save(r, w); err != nil {
+		log.Error().Err(err).Msg("could not save flash session")
+	}
+}
+
+func (p *BasePage) Fill(r *http.Request) {
 	p.CSRF = csrf.TemplateField(r)
+	session, err := ss.Get(r, "flash")
+	if err != nil {
+		log.Error().Err(err).Msg("could not get flash session")
+		return
+	}
+	if flashes := session.Flashes(); len(flashes) > 0 {
+		for _, flash := range flashes {
+			if msg, ok := flash.(string); ok {
+				parts := strings.SplitN(msg, "$$", 2)
+				if len(parts) == 2 {
+					level := parts[0]
+					message := parts[1]
+					p.FlashMessages = append(p.FlashMessages, FlashMessage{Level: level, Message: message})
+				}
+			}
+		}
+	}
 }
 
 func (p BasePage) TemplateName() string {
@@ -117,7 +164,7 @@ func (p BasePage) TemplateName() string {
 
 // helper to reduce boilerplate in controllers
 func render(r *http.Request, w http.ResponseWriter, data AppPager) {
-	data.SetCSRFToken(r)
+	data.Fill(r)
 	templates.RenderHTML(w, data.TemplateName(), data)
 }
 

@@ -1,0 +1,120 @@
+<style>
+    /* Custom Flash Message Styles */
+    .flash-container {
+        position: fixed;
+        top: 1.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    .flash-message {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-radius: 5px;
+        color: #fff;
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+
+    .flash-message.fade-in {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+
+    .flash-message.fade-out {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    .flash-message .message-text {
+        flex-grow: 1;
+    }
+
+    .flash-message .close-btn {
+        background: none;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 1.2rem;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .flash-message .close-btn:hover {
+        opacity: 1;
+    }
+
+    /* Message Type Styles */
+    .flash-success {
+        background-color: #388e3c;
+        /* Pico valid green */
+        color: #fff;
+    }
+
+    .flash-error {
+        background-color: #d32f2f;
+        /* Pico invalid red */
+        color: #fff;
+    }
+
+    .flash-warning {
+        background-color: #f57c00;
+        /* Amber 700 */
+        color: #fff;
+    }
+
+    .flash-info {
+        background-color: #1095c1;
+        /* Pico primary blue */
+        color: #fff;
+    }
+</style>
+
+<div id="flash-container" class="flash-container">
+    {{ range . }}
+    <div class="flash-message flash-{{ .Level }}">
+        <span style="margin-right: 1rem;">
+            {{ if eq .Level "info" }}
+            <i data-feather="info"></i>
+            {{ else if eq .Level "success" }}
+            <i data-feather="check-circle"></i>
+            {{ else if eq .Level "warning" }}
+            <i data-feather="alert-triangle"></i>
+            {{ else if eq .Level "error" }}
+            <i data-feather="x-octagon"></i>
+            {{ end }}
+        </span>
+        <span class="message-text">{{ .Message }}</span>
+        <button class="close-btn" onclick="this.closest('.flash-message').classList.add('fade-out')">
+            <i data-feather="x-square"></i>
+        </button>
+    </div>
+    {{ end }}
+</div>
+<script>
+    // Fade in all flash messages on page load
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.flash-message').forEach(function (msg) {
+            setTimeout(function () {
+                msg.classList.add('fade-in');
+            }, 10);
+            setTimeout(function () {
+                msg.classList.remove('fade-in');
+                msg.classList.add('fade-out');
+                setTimeout(function () {
+                    msg.remove();
+                }, 500);
+            }, 4000);
+        });
+    });
+</script>
