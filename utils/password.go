@@ -3,32 +3,20 @@ package utils
 import (
 	"crypto/rand"
 	"crypto/subtle"
-	"encoding/base32"
 	"encoding/base64"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
 
-// https://thecopenhagenbook.com/random-values
-var humanFriendlyEncoding = base32.NewEncoding("0123456789ABCDEFGHJKMNPQRSTVWXYZ").WithPadding(base32.NoPadding)
-
 func HumanFriendlyToken() string {
-	bytes := make([]byte, 12)
-	rand.Read(bytes)
-	return humanFriendlyEncoding.EncodeToString(bytes)
+	return rand.Text()[:8] // Generate a human-friendly token of 8 characters
 }
 
 // https://thecopenhagenbook.com/password-authentication
 
-func GenerateRandomString() string {
-	bytes := make([]byte, 12)
-	rand.Read(bytes)
-	return base32.StdEncoding.EncodeToString(bytes)
-}
-
 func HashPassword(password string) string {
-	salt := GenerateRandomString()
+	salt := rand.Text()
 	hash := argon2.IDKey([]byte(password), []byte(salt), 2, 19*1024, 1, 32)
 	return salt + "$" + base64.StdEncoding.EncodeToString(hash)
 
