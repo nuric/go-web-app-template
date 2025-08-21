@@ -1,11 +1,13 @@
 package storage
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
 type Storer interface {
+	Name() string
 	Read(name string) ([]byte, error)
 	Write(name string, data []byte) error
 	Delete(name string) error
@@ -13,6 +15,10 @@ type Storer interface {
 
 type OsStorer struct {
 	Path string
+}
+
+func (s *OsStorer) Name() string {
+	return fmt.Sprintf("os: %s", s.Path)
 }
 
 func (s *OsStorer) Read(name string) ([]byte, error) {
