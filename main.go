@@ -29,6 +29,7 @@ type Config struct {
 	DBUrl           string `env:"DB_URL" envDefault:"data.db"`
 	SessionSecret   string `env:"SESSION_SECRET" envDefault:"32-character-long-secret-key-abc"`
 	CSRFSecret      string `env:"CSRF_SECRET" envDefault:"32-character-long-csrf-secret-key-xyz"`
+	DataFolder      string `env:"DATA_FOLDER" envDefault:"data"`
 }
 
 func main() {
