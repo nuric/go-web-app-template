@@ -27,6 +27,7 @@ func (p *VerifyEmailPage) Validate() bool {
 func sendEmailVerification(userID uint, email string) error {
 	newToken := models.Token{
 		UserID:    userID,
+		Email:     email,
 		Token:     utils.HumanFriendlyToken(),
 		Purpose:   "email_verification",
 		ExpiresAt: time.Now().Add(15 * time.Minute),
