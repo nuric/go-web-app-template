@@ -3,6 +3,7 @@
 <section>
     <h1>Account</h1>
     <ul>
+        <li><strong>Name:</strong> {{ .User.Name }}</li>
         <li><strong>Email:</strong> {{ .User.Email }}</li>
         <li><strong>Date Joined:</strong> {{ .User.CreatedAt.Format "2006-01-02 15:04:05" }}</li>
         <li><strong>Email Verified:</strong> {{ if .User.EmailVerified }}Yes{{ else }}No{{ end }}</li>
@@ -12,6 +13,35 @@
 <hr>
 
 {{ $csrf := .CSRF }}
+
+<section>
+    <h2>Update Profile</h2>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="_action" value="update_profile" />
+        <label for="name">Name</label>
+        <input type="text" id="name" required name="name" value="{{ .User.Name }}" placeholder="Enter your name" />
+        {{ if .UpdateProfileForm.NameError }}
+        <small id="nameError">{{ .UpdateProfileForm.NameError }}</small>
+        {{ end }}
+
+        {{ if .User.Picture }}
+        <img src="{{ .User.Picture }}" alt="Profile Picture" class="profile-picture" title="{{ .User.Email }}">
+        {{ end }}
+        <label for="picture">Profile Picture</label>
+        <input type="file" id="picture" name="picture" accept="image/*" />
+
+        {{ if .UpdateProfileForm.PictureError }}
+        <small id="pictureError">{{ .UpdateProfileForm.PictureError }}</small>
+        {{ end }}
+
+        {{ if .UpdateProfileForm.Error }}
+        <p class="error">{{ .UpdateProfileForm.Error }}</p>
+        {{ end }}
+
+        {{ $csrf }}
+        <button type="submit">Update Profile</button>
+    </form>
+</section>
 
 <section>
     <h2>Change Email</h2>

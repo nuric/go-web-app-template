@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/nuric/go-api-template/controllers"
 	"github.com/nuric/go-api-template/email"
+	"github.com/nuric/go-api-template/storage"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
@@ -19,8 +20,9 @@ func TestLoginPage(t *testing.T) {
 	require.NoError(t, err)
 	config := controllers.Config{
 		Database:   db,
-		Store:      sessions.NewCookieStore([]byte("32-character-long-secret-key-abc")),
+		Session:    sessions.NewCookieStore([]byte("32-character-long-secret-key-abc")),
 		Emailer:    email.LogEmailer{},
+		Storer:     &storage.OsStorer{Path: t.TempDir()},
 		CSRFSecret: "32-character-long-csrf-secret-key-xyz",
 		Debug:      true,
 	}

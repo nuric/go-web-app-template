@@ -2,12 +2,17 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"path/filepath"
 
+	"github.com/google/uuid"
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type AccountPage struct {
@@ -15,6 +20,7 @@ type AccountPage struct {
 	User               models.User
 	ChangeEmailForm    ChangeEmailForm
 	ChangePasswordForm ChangePasswordForm
+	UpdateProfileForm  UpdateProfileForm
 }
 
 type ChangeEmailForm struct {
@@ -53,6 +59,20 @@ func (f *ChangePasswordForm) Validate() bool {
 	return f.CurrentPasswordError == nil && f.NewPasswordError == nil && f.ConfirmPasswordError == nil
 }
 
+type UpdateProfileForm struct {
+	Name         string `schema:"name"`
+	NameError    error
+	PictureError error // Used as a placeholder for picture upload errors
+	Error        error
+}
+
+func (f *UpdateProfileForm) Validate() bool {
+	if f.Name == "" {
+		f.NameError = errors.New("name is required")
+	}
+	return f.NameError == nil
+}
+
 func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 	p.User = auth.GetCurrentUser(r)
 	// ---------------------------
@@ -62,6 +82,54 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 	// ---------------------------
 	r.ParseForm()
 	switch r.PostFormValue("_action") {
+	case "update_profile":
+		f := &p.UpdateProfileForm
+		if err := DecodeValidForm(f, r); err != nil {
+			f.Error = err
+			return
+		}
+		file, handler, err := r.FormFile("picture")
+		if err != nil {
+			f.PictureError = err
+			return
+		}
+		defer file.Close()
+		// We are using a UUID for the filename to avoid collisions
+		guid := uuid.New().String()
+		fname := fmt.Sprintf("%s%s", guid, filepath.Ext(handler.Filename))
+		newUpload := models.Upload{
+			GUID:     guid,
+			UserID:   p.User.ID,
+			FileName: filepath.Base(handler.Filename),
+			Size:     handler.Size,
+			Mime:     handler.Header.Get("Content-Type"),
+		}
+		err = db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&newUpload).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(&p.User).Update("name", f.Name).Error; err != nil {
+				return err
+			}
+			if err := tx.Model(&p.User).Update("picture", "uploads/"+fname).Error; err != nil {
+				return err
+			}
+			data, err := io.ReadAll(file)
+			if err != nil {
+				return err
+			}
+			if err := st.Write("uploads/"+fname, data); err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			log.Error().Err(err).Msg("could not update user profile")
+			f.Error = errors.New("could not update user profile")
+			return
+		}
+		p.Flash(r, FlashSuccess, "Your profile has been updated")
+		p.redirect = r.URL.Path
 	case "request_email_change_token":
 		f := &p.ChangeEmailForm
 		if err := DecodeValidForm(f, r); err != nil {

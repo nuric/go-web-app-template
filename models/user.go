@@ -12,6 +12,8 @@ type User struct {
 	Password      string `gorm:"not null"`
 	Role          string `gorm:"default:'basic'"`
 	EmailVerified bool   `gorm:"default:false"`
+	Name          string
+	Picture       string
 }
 
 type Token struct {

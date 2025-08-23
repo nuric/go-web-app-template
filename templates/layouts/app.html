@@ -82,7 +82,7 @@
         margin-bottom: 2rem;
     }
 
-    .sidebar-header .avatar {
+    .sidebar-header .profile-picture {
         width: 80px;
         height: 80px;
         border-radius: 50%;
@@ -149,9 +149,13 @@
     <i id="sidebar-close-icon" style="position:absolute;top:1rem;right:1rem;cursor:pointer;color: var(--pico-primary);"
         data-feather="x-square"></i>
     <div class="sidebar-header">
-        <div class="avatar" title="{{ .User.Email }}">
+        {{ if .User.Picture }}
+        <img src="{{ .User.Picture }}" alt="Profile Picture" class="profile-picture" title="{{ .User.Email }}">
+        {{ else }}
+        <div class="profile-picture" title="{{ .User.Email }}">
             K
         </div>
+        {{ end }}
         <h5>{{ .User.Email }}</h5>
         <small>Acme Corp</small>
     </div>

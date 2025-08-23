@@ -16,6 +16,7 @@ import (
 	"github.com/nuric/go-api-template/email"
 	"github.com/nuric/go-api-template/middleware"
 	"github.com/nuric/go-api-template/models"
+	"github.com/nuric/go-api-template/storage"
 	"github.com/nuric/go-api-template/utils"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -60,7 +61,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	if err := db.AutoMigrate(&models.User{}, &models.Token{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Token{}, &models.Upload{}); err != nil {
 		log.Fatal().Err(err).Msg("Failed to auto-migrate database")
 	}
 	// ---------------------------
@@ -73,8 +74,9 @@ func main() {
 	config := controllers.Config{
 		Mux:        mux,
 		Database:   db,
-		Store:      ss,
+		Session:    ss,
 		Emailer:    email.LogEmailer{},
+		Storer:     &storage.OsStorer{Path: cfg.DataFolder},
 		CSRFSecret: cfg.CSRFSecret,
 		Debug:      cfg.Debug,
 	}
