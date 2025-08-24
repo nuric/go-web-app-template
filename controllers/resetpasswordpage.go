@@ -51,7 +51,6 @@ func (p *ResetPasswordPage) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	r.ParseForm()
 	if r.PostFormValue("_action") != "reset_password" {
 		p.notFound = true
 		return

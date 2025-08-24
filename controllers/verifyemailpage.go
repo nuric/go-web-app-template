@@ -87,7 +87,6 @@ func (p *VerifyEmailPage) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	r.ParseForm()
 	switch r.PostFormValue("_action") {
 	case "resend_verification":
 		if err := sendEmailVerification(user.ID, user.Email); err != nil {

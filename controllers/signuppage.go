@@ -42,7 +42,6 @@ func (p *SignUpPage) Handle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		return
 	}
-	r.ParseForm()
 	if r.PostFormValue("_action") != "signup" {
 		p.notFound = true
 		return
