@@ -80,7 +80,6 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	r.ParseForm()
 	switch r.PostFormValue("_action") {
 	case "update_profile":
 		f := &p.UpdateProfileForm
