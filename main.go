@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/lmittmann/tint"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/glebarez/sqlite"
@@ -18,8 +21,6 @@ import (
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/storage"
 	"github.com/nuric/go-api-template/utils"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -38,31 +39,37 @@ func main() {
 	// Setup config
 	var cfg Config
 	if err := env.Parse(&cfg); err != nil {
-		log.Fatal().Err(err).Msg("Failed to parse environment variables")
+		slog.Error("Failed to parse environment variables", "error", err)
+		os.Exit(1)
 	}
 	// ---------------------------
 	// Setup logging
 	// UNIX Time is faster and smaller than most timestamps
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	// ---------------------------
-	// Default level for this example is info, unless debug flag is present
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	if cfg.PrettyLogOutput {
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-	}
+	logLevel := slog.LevelInfo
 	if cfg.Debug {
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		log.Debug().Interface("config", cfg).Msg("Configuration")
+		logLevel = slog.LevelDebug
 	}
-	log.Debug().Msg("Debug mode enabled")
+	if cfg.PrettyLogOutput {
+		// Set global logger with custom options
+		slog.SetDefault(slog.New(
+			tint.NewHandler(os.Stdout, &tint.Options{
+				Level:      logLevel,
+				TimeFormat: time.Kitchen,
+			}),
+		))
+	} else {
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	}
 	// ---------------------------
 	// Setup database connection
 	db, err := gorm.Open(sqlite.Open(cfg.DBUrl), &gorm.Config{})
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
+		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	if err := db.AutoMigrate(&models.User{}, &models.Token{}); err != nil {
-		log.Fatal().Err(err).Msg("Failed to auto-migrate database")
+		slog.Error("Failed to auto-migrate database", "error", err)
+		os.Exit(1)
 	}
 	// ---------------------------
 	// Our routes
@@ -83,7 +90,6 @@ func main() {
 	handler := controllers.Setup(config)
 	// Middleware
 	handler = middleware.NewRateLimiter(7, 14, 15*time.Minute).Limit(handler)
-	handler = middleware.ZeroLoggerMetrics(handler)
 	handler = middleware.Recover(handler)
 	// ---------------------------
 	server := &http.Server{
@@ -91,9 +97,10 @@ func main() {
 		Handler: handler,
 	}
 	go func() {
-		log.Info().Str("httpAddr", server.Addr).Msg("HTTPAPI.Serve")
+		slog.Info("HTTPAPI.Serve", "httpAddr", server.Addr)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal().Err(err).Msg("Failed to listen on port 8080")
+			slog.Error("Failed to listen on port 8080", "error", err)
+			os.Exit(1)
 		}
 	}()
 	quit := make(chan os.Signal, 1)
@@ -102,13 +109,12 @@ func main() {
 	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	sig := <-quit
-	log.Info().Str("signal", sig.String()).Msg("Shutting down server...")
+	slog.Info("Shutting down server...", "signal", sig.String())
 	// The default kubernetes grace period is 30 seconds
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	if err := server.Shutdown(ctx); err != nil {
-		log.Error().Err(err).Msg("Server forced to shutdown")
+		slog.Error("Server forced to shutdown", "error", err)
 	}
 	cancel()
-	log.Info().Msg("Server stopped")
-
+	slog.Info("Server stopped")
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -115,7 +115,7 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 			return nil
 		})
 		if err != nil {
-			log.Error().Err(err).Msg("could not update user profile")
+			slog.Error("could not update user profile", "error", err)
 			f.Error = errors.New("could not update user profile")
 			return
 		}
@@ -146,7 +146,7 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 		// Update the email of the user
 		if err := db.Model(&p.User).Update("email", f.Email).Error; err != nil {
-			log.Error().Err(err).Msg("could not update user email")
+			slog.Error("could not update user email", "error", err)
 			f.Error = errors.New("could not change user email")
 			return
 		}
@@ -164,7 +164,7 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 		hashedPassword := utils.HashPassword(f.NewPassword)
 		if err := db.Model(&p.User).Update("password", hashedPassword).Error; err != nil {
-			log.Error().Err(err).Msg("could not change user password")
+			slog.Error("could not change user password", "error", err)
 			f.Error = errors.New("could not change user password")
 			return
 		}

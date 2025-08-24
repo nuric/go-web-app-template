@@ -2,12 +2,12 @@ package controllers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
-	"github.com/rs/zerolog/log"
 )
 
 type SignUpPage struct {
@@ -59,21 +59,21 @@ func (p *SignUpPage) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := db.Create(&newUser).Error; err != nil {
-		log.Error().Err(err).Msg("could not create user")
+		slog.Error("could not create user", "error", err)
 		p.Error = errors.New("could not create user")
 		return
 	}
 
 	if err := auth.LogUserIn(w, r, newUser.ID, ss); err != nil {
-		log.Error().Err(err).Msg("could not log user in after signup")
+		slog.Error("could not log user in after signup", "error", err)
 		http.Error(w, "could not log user in after signup", http.StatusInternalServerError)
 		return
 	}
 
 	if err := sendEmailVerification(newUser.ID, newUser.Email); err != nil {
-		log.Error().Err(err).Msg("could not send new user email verification")
+		slog.Error("could not send new user email verification", "error", err)
 	}
-	log.Debug().Str("email", p.Email).Msg("User signed up successfully")
+	slog.Debug("User signed up successfully", "email", p.Email)
 	// Redirect to dashboard
 	p.redirect = "/dashboard"
 }

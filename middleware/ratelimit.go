@@ -1,13 +1,13 @@
 package middleware
 
 import (
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
 )
 
@@ -28,7 +28,7 @@ func ClientIP(r *http.Request) string {
 	// Parse and normalise the IP address
 	netIP := net.ParseIP(ip)
 	if netIP == nil {
-		log.Warn().Str("ip", ip).Msg("failed to parse IP address")
+		slog.Warn("failed to parse IP address", "ip", ip)
 		return "unknown"
 	}
 	return netIP.String()
@@ -82,7 +82,7 @@ func (rl *RateLimiter) Limit(next http.Handler) http.Handler {
 		rl.mu.Unlock()
 
 		if !c.limiter.Allow() {
-			log.Warn().Str("ip", ip).Msg("rate limit exceeded")
+			slog.Warn("rate limit exceeded", "ip", ip)
 			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
 			return
 		}
@@ -96,10 +96,10 @@ func (rl *RateLimiter) backgroundCleanup() {
 	ticker := time.NewTicker(rl.expiry)
 	defer ticker.Stop()
 
-	log.Debug().Msg("Starting background cleanup for rate limiter")
+	slog.Debug("Starting background cleanup for rate limiter")
 	for range ticker.C {
 		rl.mu.Lock()
-		log.Debug().Int("clients", len(rl.clients)).Msg("Running background cleanup for rate limiter")
+		slog.Debug("Running background cleanup for rate limiter", "clients", len(rl.clients))
 		for ip, c := range rl.clients {
 			// If the client hasn't been seen in the expiry window, delete it.
 			if time.Since(c.lastSeen) > rl.expiry {

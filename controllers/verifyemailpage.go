@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
-	"github.com/rs/zerolog/log"
 )
 
 type VerifyEmailPage struct {
@@ -33,14 +33,14 @@ func sendEmailVerification(userID uint, email string) error {
 		ExpiresAt: time.Now().Add(15 * time.Minute),
 	}
 	if err := db.Create(&newToken).Error; err != nil {
-		log.Error().Err(err).Msg("could not create email verification token")
+		slog.Error("could not create email verification token", "error", err)
 		return errors.New("could not create verification token")
 	}
 	emailData := map[string]any{
 		"Token": newToken.Token,
 	}
 	if err := sendTemplateEmail(email, "Email Verification", "verify_email.txt", emailData); err != nil {
-		log.Error().Err(err).Msg("could not send verification email")
+		slog.Error("could not send verification email", "error", err)
 		return errors.New("could not send verification email")
 	}
 	return nil
@@ -56,7 +56,7 @@ func checkEmailVerification(userID uint, email string, userToken string) error {
 		Where("expires_at > ?", time.Now()).
 		Order("created_at DESC").
 		First(&token).Error; err != nil {
-		log.Error().Err(err).Msg("could not find valid token")
+		slog.Error("could not find valid token", "error", err)
 		return errors.New("invalid token or expired token")
 	}
 	// Check if the token matches
@@ -65,7 +65,7 @@ func checkEmailVerification(userID uint, email string, userToken string) error {
 	}
 	// Delete token as it is now considered used
 	if err := db.Delete(&token).Error; err != nil {
-		log.Error().Err(err).Msg("could not delete token after verification")
+		slog.Error("could not delete token after verification", "error", err)
 	}
 	return nil
 }
@@ -107,7 +107,7 @@ func (p *VerifyEmailPage) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 		// Update the user's email verification status
 		if err := db.Model(&user).Update("email_verified", true).Error; err != nil {
-			log.Error().Err(err).Msg("could not update user email verification status")
+			slog.Error("could not update user email verification status", "error", err)
 			p.Error = errors.New("could not verify email")
 			return
 		}

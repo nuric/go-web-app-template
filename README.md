@@ -61,5 +61,5 @@ This structure helps you quickly locate code for authentication, page controller
 - [gorilla/csrf](https://github.com/gorilla/csrf) for CSRF protection
 - [gorilla/sessions](https://github.com/gorilla/sessions) for session management
 - [gorilla/schema](https://github.com/gorilla/schema) for decoding form values into structs
-- [rs/zerolog](https://github.com/rs/zerolog) for structured logging
+- [lmittmann/tint](https://github.com/lmittmann/tint) for coloured logging
 - [gorm](https://github.com/go-gorm/gorm) for ORM and database interactions

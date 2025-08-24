@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -68,25 +68,25 @@ func (p *ResetPasswordPage) Handle(w http.ResponseWriter, r *http.Request) {
 		Where("expires_at > ?", time.Now()).
 		Order("created_at DESC").
 		First(&token).Error; err != nil {
-		log.Error().Err(err).Msg("could not find valid token")
+		slog.Error("could not find valid token", "error", err)
 		p.Error = errors.New("invalid token")
 		return
 	}
 	if p.Token != token.Token {
-		log.Error().Msg("password reset token mismatch")
+		slog.Error("password reset token mismatch")
 		p.Error = errors.New("invalid token")
 		return
 	}
 	// Reset the user's password
 	rows, err := gorm.G[models.User](db).Where("email = ?", p.Email).Update(r.Context(), "password", utils.HashPassword(p.NewPassword))
 	if err != nil || rows == 0 {
-		log.Error().Err(err).Msg("could not update user password")
+		slog.Error("could not update user password", "error", err)
 		p.Error = errors.New("could not update password")
 		return
 	}
 	// Delete the token after successful password reset
 	if err := db.Delete(&token).Error; err != nil {
-		log.Error().Err(err).Msg("could not delete reset token")
+		slog.Error("could not delete reset token", "error", err)
 	}
 
 	// Jobs done, they can now login with the new password

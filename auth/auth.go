@@ -2,11 +2,11 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/sessions"
 	"github.com/nuric/go-api-template/models"
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -20,7 +20,7 @@ func UserMiddleware(next http.Handler, db *gorm.DB, store sessions.Store) http.H
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s, err := store.Get(r, sessionName)
 		if err != nil {
-			log.Error().Err(err).Msg("Failed to get session")
+			slog.Error("Failed to get session", "error", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
@@ -32,7 +32,7 @@ func UserMiddleware(next http.Handler, db *gorm.DB, store sessions.Store) http.H
 			// Fetch user from database to ensure user exists
 			var user models.User
 			if err := db.First(&user, userId).Error; err != nil && err != gorm.ErrRecordNotFound {
-				log.Error().Err(err).Msg("Failed to fetch user from database")
+				slog.Error("Failed to fetch user from database", "error", err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
@@ -40,7 +40,6 @@ func UserMiddleware(next http.Handler, db *gorm.DB, store sessions.Store) http.H
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, userKey, user)
 			r = r.WithContext(ctx)
-			log.Debug().Uint("userId", userId).Msg("Authenticated user")
 		}
 		// Call the next handler
 		next.ServeHTTP(w, r)
@@ -80,29 +79,29 @@ func GetCurrentUser(r *http.Request) models.User {
 func LogUserIn(w http.ResponseWriter, r *http.Request, userId uint, store sessions.Store) error {
 	s, err := store.New(r, sessionName)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to create session")
+		slog.Error("Failed to create session", "error", err)
 		return err
 	}
 	s.Values[userIDKey] = userId
 	if err := s.Save(r, w); err != nil {
-		log.Error().Err(err).Msg("Failed to save session")
+		slog.Error("Failed to save session", "error", err)
 		return err
 	}
-	log.Debug().Uint("userId", userId).Msg("User logged in")
+	slog.Debug("User logged in", "userId", userId)
 	return nil
 }
 
 func LogUserOut(w http.ResponseWriter, r *http.Request, store sessions.Store) error {
 	s, err := store.Get(r, sessionName)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to get session")
+		slog.Error("Failed to get session", "error", err)
 		return err
 	}
 	s.Values = make(map[any]any) // Clear session values
 	if err := s.Save(r, w); err != nil {
-		log.Error().Err(err).Msg("Failed to save session")
+		slog.Error("Failed to save session", "error", err)
 		return err
 	}
-	log.Debug().Msg("User logged out")
+	slog.Debug("User logged out")
 	return nil
 }

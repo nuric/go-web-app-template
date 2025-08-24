@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gorilla/schema"
-
-	"github.com/rs/zerolog/log"
 )
 
 // Validator is an object that can be validated.
@@ -25,16 +24,16 @@ func Encode[T any](w http.ResponseWriter, status int, v T) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(v); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		log.Error().Err(err).Msg("could not encode response")
+		slog.Error("could not encode response", "error", err)
 		if errErr := json.NewEncoder(w).Encode(map[string]string{"error": err.Error()}); errErr != nil {
-			log.Error().Err(errErr).Msg("could not encode error response")
+			slog.Error("could not encode error response", "error", errErr)
 			http.Error(w, "could not encode error response", http.StatusInternalServerError)
 		}
 		return
 	}
 	w.WriteHeader(status)
 	if size, err := w.Write(buf.Bytes()); size != len(buf.Bytes()) || err != nil {
-		log.Error().Err(err).Msg("could not write response")
+		slog.Error("could not write response", "error", err)
 		http.Error(w, "could not write response", http.StatusInternalServerError)
 		return
 	}

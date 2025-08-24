@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/nuric/go-api-template/templates"
 )
@@ -40,9 +42,20 @@ func (rwi *responseWriterInterceptor) Write(b []byte) (int, error) {
 
 func NotFoundRenderer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
 		// Create a response writer interceptor
 		interceptor := &responseWriterInterceptor{w, http.StatusOK}
 		// Call the next handler
 		next.ServeHTTP(interceptor, r)
+
+		// Handle logging
+		duration := time.Since(start)
+		slog.Info("Request completed",
+			"method", r.Method,
+			"uri", r.RequestURI,
+			"status", interceptor.statusCode,
+			"duration", duration,
+			"remote_ip", ClientIP(r),
+		)
 	})
 }

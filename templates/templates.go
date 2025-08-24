@@ -3,10 +3,9 @@ package templates
 import (
 	"embed"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 /* When we embed, our binary effectively contains the templates. This allows us
@@ -23,17 +22,17 @@ func init() {
 	if tpl == nil {
 		tpl, err = template.ParseFS(templatesFS, "*/*.html", "*/*.txt")
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to parse templates")
+			panic("could not parse templates: " + err.Error())
 		}
 	}
-	log.Debug().Str("templates", tpl.DefinedTemplates()).Msg("Templates loaded successfully")
+	slog.Debug("Templates loaded", "template_count", len(tpl.Templates()))
 }
 
 func RenderHTML(w http.ResponseWriter, name string, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// Render the template
 	if err := tpl.ExecuteTemplate(w, name, data); err != nil {
-		log.Error().Err(err).Msg("could not write template error response")
+		slog.Error("could not write template response", "error", err)
 		http.Error(w, "could not generate page", http.StatusInternalServerError)
 	}
 }
@@ -42,7 +41,7 @@ func RenderEmail(templateName string, data any) (string, error) {
 	// Render the template to a string
 	var body strings.Builder
 	if err := tpl.ExecuteTemplate(&body, templateName, data); err != nil {
-		log.Error().Err(err).Msg("could not render email template")
+		slog.Error("could not render email template", "error", err)
 		return "", err
 	}
 	return body.String(), nil

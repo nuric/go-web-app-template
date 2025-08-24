@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/nuric/go-api-template/static"
 	"github.com/nuric/go-api-template/storage"
 	"github.com/nuric/go-api-template/templates"
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -47,7 +47,7 @@ func Setup(c Config) http.Handler {
 	ss = c.Session
 	em = c.Emailer
 	st = c.Storer
-	log.Debug().Str("database", db.Name()).Type("session", ss).Type("emailer", em).Str("storer", st.Name()).Msg("Database and session store set")
+	slog.Debug("Database and session store set", "database", db.Name(), "session", fmt.Sprintf("%T", ss), "emailer", fmt.Sprintf("%T", em), "storer", st.Name())
 	// ---------------------------
 	// Handle static files
 	mux := c.Mux
@@ -167,7 +167,7 @@ func (p *BasePage) PreHandle(r *http.Request) {
 	p.CSRF = csrf.TemplateField(r)
 	session, err := ss.Get(r, "flash")
 	if err != nil {
-		log.Error().Err(err).Msg("could not get flash session")
+		slog.Error("could not get flash session", "error", err)
 		return
 	}
 	if flashes := session.Flashes(); len(flashes) > 0 {
@@ -187,7 +187,7 @@ func (p *BasePage) PreHandle(r *http.Request) {
 func (p *BasePage) Flash(r *http.Request, level string, message string) {
 	session, err := ss.Get(r, "flash")
 	if err != nil {
-		log.Error().Err(err).Msg("could not get flash session")
+		slog.Error("could not get flash session", "error", err)
 	}
 	session.AddFlash(fmt.Sprintf("%s$$%s", level, message))
 }
@@ -199,11 +199,11 @@ func (p *BasePage) Handle(w http.ResponseWriter, r *http.Request) {
 func (p *BasePage) PostHandle(w http.ResponseWriter, r *http.Request) {
 	session, err := ss.Get(r, "flash")
 	if err != nil {
-		log.Error().Err(err).Msg("could not get flash session")
+		slog.Error("could not get flash session", "error", err)
 		return
 	}
 	if err := session.Save(r, w); err != nil {
-		log.Error().Err(err).Msg("could not save flash session")
+		slog.Error("could not save flash session", "error", err)
 	}
 }
 
@@ -235,12 +235,12 @@ func sendTemplateEmail(to, subject, templateName string, data any) error {
 	// Render the template to a string
 	body, err := templates.RenderEmail(templateName, data)
 	if err != nil {
-		log.Error().Err(err).Msg("could not render email template")
+		slog.Error("could not render email template", "error", err)
 		return errors.New("could not render email template")
 	}
 	// Send the email using the emailer
 	if err := em.SendEmail(to, subject, body); err != nil {
-		log.Error().Err(err).Msg("could not send email")
+		slog.Error("could not send email", "error", err)
 		return errors.New("could not send email")
 	}
 	return nil

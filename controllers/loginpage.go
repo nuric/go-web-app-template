@@ -3,13 +3,13 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/utils"
-	"github.com/rs/zerolog/log"
 )
 
 type LoginPage struct {
@@ -33,7 +33,6 @@ func (p *LoginPage) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ---------------------------
-	r.ParseForm()
 	switch r.PostFormValue("_action") {
 	case "login":
 		f := &p.LoginForm
@@ -43,21 +42,21 @@ func (p *LoginPage) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 		var user models.User
 		if err := db.Where("email = ?", f.Email).First(&user).Error; err != nil {
-			log.Debug().Err(err).Uint("userId", user.ID).Msg("could not find user")
+			slog.Debug("could not find user", "error", err, "email", f.Email)
 			f.Error = errors.New("invalid email or password")
 			return
 		}
 		if !utils.VerifyPassword(user.Password, f.Password) {
-			log.Debug().Uint("userId", user.ID).Msg("password verification failed")
+			slog.Debug("password verification failed", "userId", user.ID)
 			f.Error = errors.New("invalid email or password")
 			return
 		}
 		if err := auth.LogUserIn(w, r, user.ID, ss); err != nil {
-			log.Error().Err(err).Uint("userId", user.ID).Msg("could not log user in")
+			slog.Error("could not log user in", "error", err, "userId", user.ID)
 			f.Error = errors.New("could not log user in")
 			return
 		}
-		log.Debug().Uint("userId", user.ID).Str("email", f.Email).Msg("User logged in successfully")
+		slog.Debug("User logged in successfully", "userId", user.ID, "email", f.Email)
 		// Redirect to dashboard
 		p.redirect = "/dashboard"
 	case "forgot_password":
@@ -74,7 +73,7 @@ func (p *LoginPage) Handle(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt: time.Now().Add(15 * time.Minute),
 		}
 		if err := db.Create(&resetToken).Error; err != nil {
-			log.Error().Err(err).Msg("could not create password reset token")
+			slog.Error("could not create password reset token", "error", err)
 			f.Error = errors.New("could not send password reset email")
 			return
 		}
@@ -82,11 +81,11 @@ func (p *LoginPage) Handle(w http.ResponseWriter, r *http.Request) {
 			"Token": resetToken.Token,
 		}
 		if err := sendTemplateEmail(f.Email, "Password Reset", "reset_password.txt", emailData); err != nil {
-			log.Error().Err(err).Msg("could not send password reset email")
+			slog.Error("could not send password reset email", "error", err)
 			f.Error = err
 			return
 		}
-		log.Debug().Str("email", f.Email).Msg("Forgot password request")
+		slog.Debug("Forgot password request", "email", f.Email)
 		p.Flash(r, FlashInfo, "Password reset email sent. Please check your inbox.")
 		p.redirect = fmt.Sprintf("/reset-password?email=%s", f.Email)
 	default:
