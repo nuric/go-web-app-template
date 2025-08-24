@@ -94,6 +94,10 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
+		if handler.Size > 5*1024*1024 {
+			f.PictureError = errors.New("picture size exceeds 5MB limit")
+			return
+		}
 		// We are using a UUID for the filename to avoid collisions
 		guid := uuid.New().String()
 		fname := fmt.Sprintf("%s%s", guid, filepath.Ext(handler.Filename))
