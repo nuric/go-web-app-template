@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"path/filepath"
 	"strings"
 
 	"github.com/gorilla/csrf"
@@ -14,7 +13,6 @@ import (
 	"github.com/nuric/go-api-template/auth"
 	"github.com/nuric/go-api-template/email"
 	"github.com/nuric/go-api-template/middleware"
-	"github.com/nuric/go-api-template/models"
 	"github.com/nuric/go-api-template/static"
 	"github.com/nuric/go-api-template/storage"
 	"github.com/nuric/go-api-template/templates"
@@ -80,7 +78,7 @@ func Setup(c Config) http.Handler {
 	mux.Handle("/account", auth.VerifiedOnly(PageHandler(func() AppPager {
 		return &AccountPage{BasePage: BasePage{Title: "Account", Template: "account.html"}}
 	})))
-	mux.HandleFunc("GET /uploads/{filename...}", GetUploadHandler)
+	mux.Handle("GET /uploads/", auth.VerifiedOnly(http.StripPrefix("/uploads/", http.FileServerFS(st))))
 	mux.Handle("GET /{$}", http.RedirectHandler("/dashboard", http.StatusSeeOther))
 	// Middleware
 	var handler http.Handler = mux
@@ -89,34 +87,6 @@ func Setup(c Config) http.Handler {
 	handler = csrf.Protect([]byte(c.CSRFSecret), csrf.Secure(!c.Debug), csrf.TrustedOrigins([]string{"localhost:8080"}))(handler)
 	handler = middleware.NotFoundRenderer(handler)
 	return handler
-}
-
-// Serve uploaded files
-func GetUploadHandler(w http.ResponseWriter, r *http.Request) {
-	// We get something like /uploads/{filename}
-	filename := r.PathValue("filename")
-	if filename == "" {
-		http.NotFound(w, r)
-		return
-	}
-	/* Ideally one checks here whether the user is authorized to access this upload. */
-	guid := filename[:len(filename)-len(filepath.Ext(filename))]
-	var upload models.Upload
-	if err := db.Where("guid = ?", guid).First(&upload).Error; err != nil {
-		log.Debug().Err(err).Msg("could not find upload")
-		http.NotFound(w, r)
-		return
-	}
-	data, err := st.Read("uploads/" + filename)
-	if err != nil {
-		log.Debug().Err(err).Msg("could not read upload")
-		http.NotFound(w, r)
-		return
-	}
-	w.Header().Set("Content-Type", upload.Mime)
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", upload.Size))
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
 }
 
 type Validator interface {

@@ -2,31 +2,48 @@ package storage
 
 import (
 	"fmt"
+	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
 
 type Storer interface {
+	fs.ReadFileFS
 	Name() string
-	Read(name string) ([]byte, error)
-	Write(name string, data []byte) error
-	Delete(name string) error
+	Create(name string) (io.WriteCloser, error)
+	WriteFile(name string, data []byte) error
+	Remove(name string) error
 }
 
 type OsStorer struct {
 	Path string
 }
 
-func (s *OsStorer) Name() string {
+func (s OsStorer) Name() string {
 	return fmt.Sprintf("os: %s", s.Path)
 }
 
-func (s *OsStorer) Read(name string) ([]byte, error) {
+func (s OsStorer) Open(name string) (fs.File, error) {
+	fullPath := filepath.Join(s.Path, name)
+	return os.Open(fullPath)
+}
+
+func (s OsStorer) ReadFile(name string) ([]byte, error) {
 	fullPath := filepath.Join(s.Path, name)
 	return os.ReadFile(fullPath)
 }
 
-func (s *OsStorer) Write(name string, data []byte) error {
+func (s OsStorer) Create(name string) (io.WriteCloser, error) {
+	fullPath := filepath.Join(s.Path, name)
+	dir := filepath.Dir(fullPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, err
+	}
+	return os.OpenFile(fullPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+}
+
+func (s OsStorer) WriteFile(name string, data []byte) error {
 	fullPath := filepath.Join(s.Path, name)
 	dir := filepath.Dir(fullPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -35,7 +52,7 @@ func (s *OsStorer) Write(name string, data []byte) error {
 	return os.WriteFile(fullPath, data, 0644)
 }
 
-func (s *OsStorer) Delete(name string) error {
+func (s OsStorer) Remove(name string) error {
 	fullPath := filepath.Join(s.Path, name)
 	if err := os.Remove(fullPath); err != nil {
 		return err

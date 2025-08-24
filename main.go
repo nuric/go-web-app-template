@@ -61,7 +61,7 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	if err := db.AutoMigrate(&models.User{}, &models.Token{}, &models.Upload{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.Token{}); err != nil {
 		log.Fatal().Err(err).Msg("Failed to auto-migrate database")
 	}
 	// ---------------------------
@@ -76,7 +76,7 @@ func main() {
 		Database:   db,
 		Session:    ss,
 		Emailer:    email.LogEmailer{},
-		Storer:     &storage.OsStorer{Path: cfg.DataFolder},
+		Storer:     storage.OsStorer{Path: cfg.DataFolder},
 		CSRFSecret: cfg.CSRFSecret,
 		Debug:      cfg.Debug,
 	}

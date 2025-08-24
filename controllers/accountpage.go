@@ -100,29 +100,17 @@ func (p *AccountPage) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 		// We are using a UUID for the filename to avoid collisions
 		guid := uuid.New().String()
-		fname := fmt.Sprintf("%s%s", guid, filepath.Ext(handler.Filename))
-		newUpload := models.Upload{
-			GUID:     guid,
-			UserID:   p.User.ID,
-			FileName: filepath.Base(handler.Filename),
-			Size:     handler.Size,
-			Mime:     handler.Header.Get("Content-Type"),
-		}
+		fname := fmt.Sprintf("profile/%s%s", guid, filepath.Ext(handler.Filename))
 		err = db.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Create(&newUpload).Error; err != nil {
+			if err := tx.Model(&p.User).Updates(models.User{Name: f.Name, Picture: "/uploads/" + fname}).Error; err != nil {
 				return err
 			}
-			if err := tx.Model(&p.User).Update("name", f.Name).Error; err != nil {
-				return err
-			}
-			if err := tx.Model(&p.User).Update("picture", "uploads/"+fname).Error; err != nil {
-				return err
-			}
-			data, err := io.ReadAll(file)
+			picFile, err := st.Create(fname)
 			if err != nil {
 				return err
 			}
-			if err := st.Write("uploads/"+fname, data); err != nil {
+			defer picFile.Close()
+			if _, err := io.Copy(picFile, file); err != nil {
 				return err
 			}
 			return nil
