@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nuric/go-api-template/templates"
+	"github.com/nuric/go-web-app-template/templates"
 )
 
 /* What's happening here is that we want to check if the response header is 404

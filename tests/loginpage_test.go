@@ -8,9 +8,9 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/glebarez/sqlite"
 	"github.com/gorilla/sessions"
-	"github.com/nuric/go-api-template/controllers"
-	"github.com/nuric/go-api-template/email"
-	"github.com/nuric/go-api-template/storage"
+	"github.com/nuric/go-web-app-template/controllers"
+	"github.com/nuric/go-web-app-template/email"
+	"github.com/nuric/go-web-app-template/storage"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )

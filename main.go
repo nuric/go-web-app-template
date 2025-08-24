@@ -15,12 +15,12 @@ import (
 	"github.com/caarlos0/env/v11"
 	"github.com/glebarez/sqlite"
 	"github.com/gorilla/sessions"
-	"github.com/nuric/go-api-template/controllers"
-	"github.com/nuric/go-api-template/email"
-	"github.com/nuric/go-api-template/middleware"
-	"github.com/nuric/go-api-template/models"
-	"github.com/nuric/go-api-template/storage"
-	"github.com/nuric/go-api-template/utils"
+	"github.com/nuric/go-web-app-template/controllers"
+	"github.com/nuric/go-web-app-template/email"
+	"github.com/nuric/go-web-app-template/middleware"
+	"github.com/nuric/go-web-app-template/models"
+	"github.com/nuric/go-web-app-template/storage"
+	"github.com/nuric/go-web-app-template/utils"
 	"gorm.io/gorm"
 )
 

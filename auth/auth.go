@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-	"github.com/nuric/go-api-template/models"
+	"github.com/nuric/go-web-app-template/models"
 	"gorm.io/gorm"
 )
 

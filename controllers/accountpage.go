@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/nuric/go-api-template/auth"
-	"github.com/nuric/go-api-template/models"
-	"github.com/nuric/go-api-template/utils"
+	"github.com/nuric/go-web-app-template/auth"
+	"github.com/nuric/go-web-app-template/models"
+	"github.com/nuric/go-web-app-template/utils"
 	"gorm.io/gorm"
 )
 

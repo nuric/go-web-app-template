@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/nuric/go-api-template/auth"
+	"github.com/nuric/go-web-app-template/auth"
 )
 
 type LogoutPage struct {

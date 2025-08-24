@@ -3,8 +3,8 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/nuric/go-api-template/auth"
-	"github.com/nuric/go-api-template/models"
+	"github.com/nuric/go-web-app-template/auth"
+	"github.com/nuric/go-web-app-template/models"
 )
 
 type DashboardPage struct {

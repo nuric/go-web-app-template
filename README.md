@@ -1,4 +1,4 @@
-# go-api-template
+# go-web-app-template
 
 This is a template for creating server-side rendered web applications using Go. It is designed to be simple and minimal with no frameworks. It follows as model-view-controller approach.
 
@@ -26,8 +26,8 @@ go run ./
 or using Docker:
 
 ```bash
-docker build -t go-api-template .
-docker run -p 8080:8080 go-api-template
+docker build -t go-web-app-template .
+docker run -p 8080:8080 go-web-app-template
 ```
 
 Then navigate to [http://localhost:8080](http://localhost:8080) to get redirected to the login page.

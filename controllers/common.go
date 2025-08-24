@@ -11,12 +11,12 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	"github.com/gorilla/sessions"
-	"github.com/nuric/go-api-template/auth"
-	"github.com/nuric/go-api-template/email"
-	"github.com/nuric/go-api-template/middleware"
-	"github.com/nuric/go-api-template/static"
-	"github.com/nuric/go-api-template/storage"
-	"github.com/nuric/go-api-template/templates"
+	"github.com/nuric/go-web-app-template/auth"
+	"github.com/nuric/go-web-app-template/email"
+	"github.com/nuric/go-web-app-template/middleware"
+	"github.com/nuric/go-web-app-template/static"
+	"github.com/nuric/go-web-app-template/storage"
+	"github.com/nuric/go-web-app-template/templates"
 	"gorm.io/gorm"
 )
 

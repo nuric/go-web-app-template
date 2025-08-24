@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/nuric/go-api-template/utils"
+	"github.com/nuric/go-web-app-template/utils"
 	"github.com/stretchr/testify/require"
 )
 

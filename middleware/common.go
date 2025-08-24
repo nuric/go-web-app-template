@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/nuric/go-api-template/utils"
+	"github.com/nuric/go-web-app-template/utils"
 )
 
 // ---------------------------

@@ -12,7 +12,7 @@
 				"$go"
 			],
 			"group": "test",
-			"detail": "cd /workspaces/go-api-template; go test ./..."
+			"detail": "cd /workspaces/go-web-app-template; go test ./..."
 		},
 		{
 			"type": "shell",
